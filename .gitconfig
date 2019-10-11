@@ -1,0 +1,9 @@
+[user]
+	name = vilst3r
+	email = clifford.phan@gmail.com
+[url "git@github.com:"]
+	insteadOf = https://github.com/
+[http]
+	postBuffer = 524288000
+[push]
+  default = upstream
