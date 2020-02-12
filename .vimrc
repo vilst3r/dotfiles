@@ -26,8 +26,7 @@ hi cursorline cterm=underline ctermbg=black
 
 " Keymappings
 let mapleader=","       " leader is comma
-nnoremap <leader><space> :nohlsearch<CR>
-" turn off search highlight
+nnoremap <leader><space> :nohlsearch<CR>    "turn off search highlight
 
 " Move vertically within a single line that's wrapped
 nnoremap j gj
