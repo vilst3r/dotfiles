@@ -7,6 +7,6 @@
 - Writing/editing Javascript, Python & C++ (coming soon)
 
 # TODO
-- Script to install iSpell, PEP and more external emac dependencies from Brew/PIP OR track them into README
+- Script to install iSpell, autopep8, black and more external emac dependencies from Brew/PIP OR track them into README
 - Add C++ development configurations
 - Remove the auto custom config lines at the end of `.emacs`
