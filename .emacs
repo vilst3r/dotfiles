@@ -62,6 +62,12 @@
 ;; General
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Start Up files & window
+(split-window-right)
+(other-window 1)
+(find-file "~/.emacs.d/init.el")
+(other-window 1)
+
 ;; GUI features
 (setq inhibit-startup-message t)
 (mouse-avoidance-mode 'animate)
@@ -120,6 +126,9 @@
 
 (use-package markdown-mode)
 
+(use-package page-break-lines
+  :hook ((emacs-lisp-mode markdown-mode) . page-break-lines-mode))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Magit
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -128,6 +137,14 @@
   :config
   (global-set-key (kbd "C-x g") 'magit-status)
   (global-set-key (kbd "C-x p") 'magit-list-repositories))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Projectile
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(use-package projectile
+  :config
+  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+  (projectile-mode +1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Evil
@@ -160,6 +177,10 @@
   (with-eval-after-load 'helm
     (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)))
 
+(use-package helm-projectile
+  :config
+  (helm-projectile-on))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Latex Setup
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -185,7 +206,7 @@
 (use-package org
   :config
   (setq org-todo-keywords
-	'((sequence "TODO" "IN-PROGRESS" "WAITING" "REDO" "TEST" "REVIEW-SOLUTION" "DONE"))))   ;; Subheading States
+	'((sequence "TODO" "IN-PROGRESS" "WAITING" "REDO" "REVIEW-SOLUTION" "DONE"))))   ;; Subheading States
 
 (use-package org-bullets
   :hook (org-mode . org-bullets-mode))
@@ -270,3 +291,4 @@
   (flycheck-add-mode 'typescript-tslint 'web-mode)
   ;; configure jsx-tide checker to run after your default jsx checker
   (flycheck-add-mode 'javascript-eslint 'web-mode))
+
