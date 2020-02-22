@@ -152,30 +152,27 @@
 
 (use-package evil
   :init
-  (setq evil-want-C-u-scroll t))    ;; Override undo-tree with C-U when using evil mode
+  (setq evil-want-C-u-scroll t) ;; Override undo-tree with C-U when using evil mode
+  (evil-mode 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helm
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package helm-descbinds)
-(use-package helm-ls-git)
 (use-package helm
   :config
-  (require 'helm-config)
-  ;; Global helm commands
-  (global-set-key (kbd "C-x b") 'helm-buffers-list)
-  (global-set-key (kbd "C-x r b") 'helm-bookmarks)
   (global-set-key (kbd "C-x m") 'helm-M-x)
-  (global-set-key (kbd "C-x C-f") 'helm-find-files)
+  (global-set-key (kbd "C-x b") 'helm-mini)
+  (global-set-key (kbd "C-c i") 'helm-imenu)
   (global-set-key (kbd "C-h b") 'helm-descbinds)
+  (global-set-key (kbd "C-x C-r") 'helm-recentf)
+  (global-set-key (kbd "C-x C-f") 'helm-find-files)
+  (global-set-key (kbd "C-x r b") 'helm-filtered-bookmarks)
   (global-set-key (kbd "M-y") 'helm-show-kill-ring)
-  (global-set-key (kbd "C-x C-d") 'helm-browse-project)
-  (global-set-key (kbd "C-x r p") 'helm-projects-history)
-  (global-set-key (kbd "C-x C-g") 'helm-grep-do-git-grep)
-  ;; Allow smooth navigation through directories with TAB
   (with-eval-after-load 'helm
-    (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)))
+    (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ;; Enable TABs to persist helm options
+    (define-key helm-map (kbd "C-z") 'helm-select-action)))
 
 (use-package helm-projectile
   :config
