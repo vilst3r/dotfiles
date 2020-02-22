@@ -135,9 +135,7 @@
 
 (use-package evil
   :init
-  (setq evil-want-C-u-scroll t)    ;; Override undo-tree with C-U when using evil mode
-  :config
-  (evil-mode 0))                   ;; Turn off evil mode by default
+  (setq evil-want-C-u-scroll t))    ;; Override undo-tree with C-U when using evil mode
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helm
@@ -213,11 +211,8 @@
 (use-package py-autopep8
   :hook ((elpy-mode python-mode) . py-autopep8-enable-on-save))
 
-;; For EPI problems
-(defun epi-judge ()
-  "Use this to compile EPI problems through Python."
-  (interactive)
-  (compile (format "%s %s"  python-shell-interpreter (buffer-name))))
+(use-package blacken
+  :hook ((elpy-mode python-mode) . blacken-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Javascript Development Setup
