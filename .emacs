@@ -15,8 +15,8 @@
 
 ;; Configure registry to install packages
 (setq package-archives '(("org"       . "http://orgmode.org/elpa/")
-                         ("gnu"       . "http://elpa.gnu.org/packages/")
-                         ("melpa"     . "http://melpa.org/packages/")))
+			 ("gnu"       . "http://elpa.gnu.org/packages/")
+			 ("melpa"     . "http://melpa.org/packages/")))
 
 ;; Temporay bug fix for 26.2 MacOS Emacs - Fail to download 'gnu' archive
 (customize-set-variable 'gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
@@ -67,10 +67,23 @@
 (other-window 1)
 (find-file "~/.emacs.d/init.el")
 (other-window 1)
+(find-file "~/todo.org")
 
 ;; GUI features
 (setq inhibit-startup-message t)
 (mouse-avoidance-mode 'animate)
+(global-hl-line-mode t)
+
+;; Hide unused GUI features to gain more screen pixels
+(tool-bar-mode   -1)  ;; Remove the large Word-like editing icons at the top
+(menu-bar-mode   -1)  ;; Remove the large Mac OS top pane menu options
+
+;; Highlight cursor during navigation
+(use-package beacon
+  :diminish
+  :config
+  (setq beacon-color "#666600")
+  (beacon-mode 1))
 
 ;; Visual Styling - Doom theme
 (use-package doom-modeline)
@@ -93,9 +106,11 @@
 (setq-default display-line-numbers 'relative)
 
 ;; Utilities
+(electric-pair-mode 1) ;; Inserts registered paired s-expressions during editing
 (show-paren-mode 1)
 (customize-set-variable 'show-paren-delay 0)
 (customize-set-variable 'show-paren-style 'parenthesis)
+(fset 'yes-or-no-p 'y-or-n-p) ;; Shorten yes/no prompts
 
 ;; Configure which key package to highlight candidate commands
 (use-package which-key
@@ -150,10 +165,11 @@
 ;; Evil
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package evil
+(use-package evil  ;; This package installs undo-tree as a dependency
   :init
-  (setq evil-want-C-u-scroll t) ;; Override undo-tree with C-U when using evil mode
-  (evil-mode 1))
+  (setq evil-want-C-u-scroll t)              ;; Override undo-tree with C-U when using evil mode
+  (setq undo-tree-visualizer-timestamps t)   ;; Each node in the undo tree should have a timestamp.
+  (setq undo-tree-visualizer-diff t))        ;; Show a diff window displaying changes between undo nodes.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helm
@@ -201,9 +217,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package org
+  :ensure org-plus-contrib
+  :hook (before-save . whitespace-cleanup)
   :config
+  (setq org-default-notes-file "~/todo.org")
   (setq org-todo-keywords
-	'((sequence "TODO" "IN-PROGRESS" "WAITING" "REDO" "REVIEW-SOLUTION" "DONE"))))   ;; Subheading States
+	'((sequence "TODO" "IN-PROGRESS" "WAITING" "REDO" "REVIEW-SOLUTION" "DONE"))) ;; Subheading States
+  (setq org-ellipsis " ⤵")
+  (setq org-catch-invisible-edits 'show)
+  (setq org-return-follows-link t)
+  (setq org-enforce-todo-dependencies t)
+  (setq org-reverse-note-order nil)
+  (setq org-agenda-files (list org-default-notes-file))
+  (global-set-key (kbd "C-c c") 'org-capture)
+  (global-set-key (kbd "C-c a") 'org-agenda))
 
 (use-package org-bullets
   :hook (org-mode . org-bullets-mode))
@@ -246,7 +273,7 @@
   :hook ((js2-mode . js2-imenu-extras-mode)
 	 (js2-mode . js2-refactor-mode)
 	 (xref-backend-functions . (lambda ()
-  				    (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t))))
+				    (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t))))
   :config
   (setq js2-basic-offset 2)
   (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
@@ -267,7 +294,7 @@
 (use-package tide
   :after (typescript-mode company flycheck)
   :hook ((typescript-mode . setup-tide-mode)
-         (before-save . tide-format-before-save))
+	 (before-save . tide-format-before-save))
   :config
   (setq flycheck-check-syntax-automatically '(save mode-enabled))
   (setq company-tooltip-align-annotations t))    ;; aligns annotation to the right hand side
@@ -288,4 +315,3 @@
   (flycheck-add-mode 'typescript-tslint 'web-mode)
   ;; configure jsx-tide checker to run after your default jsx checker
   (flycheck-add-mode 'javascript-eslint 'web-mode))
-
