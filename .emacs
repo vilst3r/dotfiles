@@ -15,8 +15,8 @@
 
 ;; Configure registry to install packages
 (setq package-archives '(("org"       . "http://orgmode.org/elpa/")
-			 ("gnu"       . "http://elpa.gnu.org/packages/")
-			 ("melpa"     . "http://melpa.org/packages/")))
+                         ("gnu"       . "http://elpa.gnu.org/packages/")
+                         ("melpa"     . "http://melpa.org/packages/")))
 
 ;; Temporay bug fix for 26.2 MacOS Emacs - Fail to download 'gnu' archive
 (customize-set-variable 'gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
@@ -33,11 +33,11 @@
 
 ;; Automatically update old packages
 (use-package auto-package-update
-	     :defer 10
-	     :config
-	     (setq auto-package-update-delete-old-versions t)
-	     (setq auto-package-update-hide-results t)
-	     (auto-package-update-maybe))
+             :defer 10
+             :config
+             (setq auto-package-update-delete-old-versions t)
+             (setq auto-package-update-hide-results t)
+             (auto-package-update-maybe))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; IDE Initialization
@@ -94,7 +94,6 @@
 ;; Buffer formatting
 (setq column-number-mode t)
 (setq size-indication-mode t)
-(setq fill-column 80)
 (setq echo-keystrokes .1)
 (setq-default display-line-numbers 'relative)
 
@@ -211,11 +210,13 @@
 
 (use-package org
   :ensure org-plus-contrib
-  :hook (before-save . whitespace-cleanup)
+  :hook ((before-save . whitespace-cleanup)
+         (org-mode . turn-on-auto-fill)
+         (text-mode . turn-on-auto-fill))
   :config
   (setq org-default-notes-file "~/todo.org")
   (setq org-todo-keywords
-	'((sequence "TODO(t)" "IN-PROGRESS(i)" "WAITING(w)" "REDO(r)" "EXAMINE-SOLUTION(e)" "DONE(d)"))) ;; Subheading States
+        '((sequence "TODO(t)" "IN-PROGRESS(i)" "WAITING(w)" "REDO(r)" "EXAMINE-SOLUTION(e)" "DONE(d)"))) ;; Subheading States
   (setq org-ellipsis " ⤵")
   (setq org-catch-invisible-edits 'show)
   (setq org-return-follows-link t)
@@ -225,10 +226,13 @@
   (global-set-key (kbd "C-c c") 'org-capture)
   (global-set-key (kbd "C-c a") 'org-agenda)
   (setq org-capture-templates
-	'(("t" "Tasks" entry (file+headline org-default-notes-file "Tasks")
-	   "* TODO %?\n CREATED: %U")
-	  ("c" "Curious Questions" entry (file+headline org-default-notes-file "Curious Questions")
-	   "* TODO %?\n CREATED: %U"))))
+        '(("t" "Tasks" entry (file+headline org-default-notes-file "Tasks")
+           "* TODO %?\n CREATED: %U")
+          ("c" "Curious Questions" entry (file+headline org-default-notes-file "Curious Questions")
+           "* TODO %?\n CREATED: %U")))
+  (setq-default fill-column 80         ;; Let's avoid going over 80 columns
+                truncate-lines nil       ;; I never want to scroll horizontally
+                indent-tabs-mode nil))   ;; Use spaces instead of tabs
 
 (use-package org-bullets
   :hook (org-mode . org-bullets-mode))
@@ -269,9 +273,9 @@
   :init
   (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
   :hook ((js2-mode . js2-imenu-extras-mode)
-	 (js2-mode . js2-refactor-mode)
-	 (xref-backend-functions . (lambda ()
-				    (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t))))
+         (js2-mode . js2-refactor-mode)
+         (xref-backend-functions . (lambda ()
+                                    (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t))))
   :config
   (setq js2-basic-offset 2)
   (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
@@ -292,7 +296,7 @@
 (use-package tide
   :after (typescript-mode company flycheck)
   :hook ((typescript-mode . setup-tide-mode)
-	 (before-save . tide-format-before-save))
+         (before-save . tide-format-before-save))
   :config
   (setq flycheck-check-syntax-automatically '(save mode-enabled))
   (setq company-tooltip-align-annotations t))    ;; aligns annotation to the right hand side
@@ -303,11 +307,11 @@
   (add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
   (add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
   :hook ((web-mode . (lambda ()
-		       (when (string-equal "tsx" (file-name-extension buffer-file-name))
-			(setup-tide-mode))))
-	 (web-mode . (lambda ()
-		       (when (string-equal "jsx" (file-name-extension buffer-file-name))
-			 (setup-tide-mode)))))
+                       (when (string-equal "tsx" (file-name-extension buffer-file-name))
+                        (setup-tide-mode))))
+         (web-mode . (lambda ()
+                       (when (string-equal "jsx" (file-name-extension buffer-file-name))
+                         (setup-tide-mode)))))
   :config
   ;; enable typescript-tslint checker
   (flycheck-add-mode 'typescript-tslint 'web-mode)
