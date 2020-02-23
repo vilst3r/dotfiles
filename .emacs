@@ -62,13 +62,6 @@
 ;; General
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Start Up files & window
-(split-window-right)
-(other-window 1)
-(find-file "~/.emacs.d/init.el")
-(other-window 1)
-(find-file "~/todo.org")
-
 ;; GUI features
 (setq inhibit-startup-message t)
 (mouse-avoidance-mode 'animate)
@@ -222,7 +215,7 @@
   :config
   (setq org-default-notes-file "~/todo.org")
   (setq org-todo-keywords
-	'((sequence "TODO" "IN-PROGRESS" "WAITING" "REDO" "REVIEW-SOLUTION" "DONE"))) ;; Subheading States
+	'((sequence "TODO(t)" "IN-PROGRESS(i)" "WAITING(w)" "REDO(r)" "EXAMINE-SOLUTION(e)" "DONE(d)"))) ;; Subheading States
   (setq org-ellipsis " ⤵")
   (setq org-catch-invisible-edits 'show)
   (setq org-return-follows-link t)
@@ -230,7 +223,12 @@
   (setq org-reverse-note-order nil)
   (setq org-agenda-files (list org-default-notes-file))
   (global-set-key (kbd "C-c c") 'org-capture)
-  (global-set-key (kbd "C-c a") 'org-agenda))
+  (global-set-key (kbd "C-c a") 'org-agenda)
+  (setq org-capture-templates
+	'(("t" "Tasks" entry (file+headline org-default-notes-file "Tasks")
+	   "* TODO %?\n CREATED: %U")
+	  ("c" "Curious Questions" entry (file+headline org-default-notes-file "Curious Questions")
+	   "* TODO %?\n CREATED: %U"))))
 
 (use-package org-bullets
   :hook (org-mode . org-bullets-mode))
@@ -315,3 +313,11 @@
   (flycheck-add-mode 'typescript-tslint 'web-mode)
   ;; configure jsx-tide checker to run after your default jsx checker
   (flycheck-add-mode 'javascript-eslint 'web-mode))
+
+
+;; Start Up files & window after all packages are loaded & configured
+(split-window-right)
+(other-window 1)
+(find-file "~/.emacs.d/init.el")
+(other-window 1)
+(find-file "~/todo.org")
