@@ -160,8 +160,10 @@
 (use-package evil  ;; This package installs undo-tree as a dependency
   :init
   (setq evil-want-C-u-scroll t)              ;; Override undo-tree with C-U when using evil mode
+  (setq evil-default-state 'emacs)           ;; Emacs on default for all buffers
   (setq undo-tree-visualizer-timestamps t)   ;; Each node in the undo tree should have a timestamp.
-  (setq undo-tree-visualizer-diff t))        ;; Show a diff window displaying changes between undo nodes.
+  (setq undo-tree-visualizer-diff t)         ;; Show a diff window displaying changes between undo nodes.
+  (evil-mode 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helm
@@ -230,7 +232,7 @@
            "* TODO %?\n CREATED: %U")
           ("c" "Curious Questions" entry (file+headline org-default-notes-file "Curious Questions")
            "* TODO %?\n CREATED: %U")))
-  (setq-default fill-column 80         ;; Let's avoid going over 80 columns
+  (setq-default fill-column 80           ;; Let's avoid going over 80 columns
                 truncate-lines nil       ;; I never want to scroll horizontally
                 indent-tabs-mode nil))   ;; Use spaces instead of tabs
 
