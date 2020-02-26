@@ -97,6 +97,10 @@
 (setq echo-keystrokes .1)
 (setq-default display-line-numbers 'relative)
 
+;; Wrap lines
+(setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
+(global-visual-line-mode 1)
+
 ;; Utilities
 (electric-pair-mode 1) ;; Inserts registered paired s-expressions during editing
 (show-paren-mode 1)
@@ -158,6 +162,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package evil  ;; This package installs undo-tree as a dependency
+  :hook
+  (prog-mode . hs-minor-mode)
   :init
   (setq evil-want-C-u-scroll t)              ;; Override undo-tree with C-U when using evil mode
   (setq evil-default-state 'emacs)           ;; Emacs on default for all buffers
@@ -251,6 +257,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package elpy
+  :hook
+  ((elpy-mode python-mode) . (lambda ()
+                               (setq fill-column 80)
+                               (turn-on-auto-fill)))
   :init
   (elpy-enable)
   :config
