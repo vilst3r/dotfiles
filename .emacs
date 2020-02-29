@@ -65,17 +65,18 @@
 ;; GUI features
 (setq inhibit-startup-message t)
 (mouse-avoidance-mode 'animate)
-(global-hl-line-mode t)
+(global-hl-line-mode 1)
 
 ;; Hide unused GUI features to gain more screen pixels
 (tool-bar-mode   -1)  ;; Remove the large Word-like editing icons at the top
+(scroll-bar-mode -1)  ;; Remove visual scroll bar & rely on modeline buffer percentage
 (menu-bar-mode   -1)  ;; Remove the large Mac OS top pane menu options
 
 ;; Highlight cursor during navigation
 (use-package beacon
   :diminish
   :config
-  (setq beacon-color "#666600")
+  (setq beacon-color "#539AFC")
   (beacon-mode 1))
 
 ;; Visual Styling - Doom theme
@@ -96,6 +97,18 @@
 (setq size-indication-mode t)
 (setq echo-keystrokes .1)
 (setq-default display-line-numbers 'relative)
+
+;; Mark line limit
+(use-package fill-column-indicator
+  :hook
+  ((emacs-lisp-mode . (lambda ()
+                        (setq fill-column 100)
+                        (turn-on-auto-fill))))
+  (emacs-lisp-mode . turn-on-auto-fill)
+  (prog-mode . fci-mode)
+  :config
+  (setq fci-rule-width 1)
+  (setq fci-rule-color "#D95468"))
 
 ;; Wrap lines
 (setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
@@ -168,7 +181,7 @@
   (setq evil-want-C-u-scroll t)              ;; Override undo-tree with C-U when using evil mode
   (setq evil-default-state 'emacs)           ;; Emacs on default for all buffers
   (setq undo-tree-visualizer-timestamps t)   ;; Each node in the undo tree should have a timestamp.
-  (setq undo-tree-visualizer-diff t)         ;; Show a diff window displaying changes between undo nodes.
+  (setq undo-tree-visualizer-diff t) ;; Show a diff window displaying changes between undo nodes.
   (evil-mode 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -187,7 +200,8 @@
   (global-set-key (kbd "C-x r b") 'helm-filtered-bookmarks)
   (global-set-key (kbd "M-y") 'helm-show-kill-ring)
   (with-eval-after-load 'helm
-    (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ;; Enable TABs to persist helm options
+    (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ;; Enable TABs to persist
+                                                                   ;; helm options
     (define-key helm-map (kbd "C-z") 'helm-select-action)))
 
 (use-package helm-projectile
@@ -202,7 +216,8 @@
   :ensure auctex
   :hook
   ((TeX-mode . flyspell-mode)		      ;; Highlights all misspelled words
-   (TeX-mode . (lambda () (TeX-fold-mode 1))) ;; Highlights all misspelled words in comments and strings
+   (TeX-mode . (lambda () (TeX-fold-mode 1))) ;; Highlights all misspelled words in comments &
+                                              ;; strings
    (emacs-lisp-mode . flyspell-prog-mode))    ;; Activate TeX-fold-mode.
   :config
   (setq TeX-auto-save t)
@@ -223,8 +238,8 @@
          (text-mode . turn-on-auto-fill))
   :config
   (setq org-default-notes-file "~/todo.org")
-  (setq org-todo-keywords
-        '((sequence "TODO(t)" "IN-PROGRESS(i)" "WAITING(w)" "REDO(r)" "EXAMINE-SOLUTION(e)" "DONE(d)"))) ;; Subheading States
+  (setq org-todo-keywords '((sequence "TODO(t)" "IN-PROGRESS(i)" "WAITING(w)" "REDO(r)"
+        "EXAMINE-SOLUTION(e)" "DONE(d)"))) ;; Subheading States
   (setq org-ellipsis " ⤵")
   (setq org-catch-invisible-edits 'show)
   (setq org-return-follows-link t)
@@ -286,8 +301,8 @@
   (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
   :hook ((js2-mode . js2-imenu-extras-mode)
          (js2-mode . js2-refactor-mode)
-         (xref-backend-functions . (lambda ()
-                                    (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t))))
+         (xref-backend-functions . (lambda () (add-hook 'xref-backend-functions
+                                     #'xref-js2-xref-backend nil t))))
   :config
   (setq js2-basic-offset 2)
   (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
