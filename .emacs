@@ -18,9 +18,6 @@
                          ("gnu"       . "http://elpa.gnu.org/packages/")
                          ("melpa"     . "http://melpa.org/packages/")))
 
-;; Temporay bug fix for 26.2 MacOS Emacs - Fail to download 'gnu' archive
-(customize-set-variable 'gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
-
 ;; Activate all installed packages
 (package-initialize)
 
@@ -97,6 +94,9 @@
 (setq size-indication-mode t)
 (setq echo-keystrokes .1)
 (setq-default display-line-numbers 'relative)
+(setq-default fill-column 80          ;; Let's avoid going over 80 columns
+              truncate-lines nil      ;; I never want to scroll horizontally
+              indent-tabs-mode nil)   ;; Use spaces instead of tabs
 
 ;; Mark line limit
 (use-package fill-column-indicator
@@ -104,10 +104,9 @@
   ((emacs-lisp-mode . (lambda ()
                         (setq fill-column 100)
                         (turn-on-auto-fill))))
-  (emacs-lisp-mode . turn-on-auto-fill)
   (prog-mode . fci-mode)
   :config
-  (setq fci-rule-width 1)
+  (setq fci-rule-width 2)
   (setq fci-rule-color "#D95468"))
 
 ;; Wrap lines
@@ -123,11 +122,10 @@
 
 ;; Configure which key package to highlight candidate commands
 (use-package which-key
-  :defer 5
   :config
-  (which-key-mode)
   (which-key-setup-side-window-bottom)
-  (setq which-key-idle-delay 0.05))
+  (setq which-key-idle-delay 0.05)
+  (which-key-mode))
 
 ;; Sync PATH variable from bash shell to the emacs environment
 (use-package exec-path-from-shell
@@ -159,8 +157,7 @@
 
 (use-package magit
   :config
-  (global-set-key (kbd "C-x g") 'magit-status)
-  (global-set-key (kbd "C-x p") 'magit-list-repositories))
+  (global-set-key (kbd "C-x g") 'magit-status))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Projectile
@@ -234,7 +231,7 @@
 (use-package org
   :ensure org-plus-contrib
   :hook ((before-save . whitespace-cleanup)
-         (org-mode . turn-on-auto-fill)
+         (org-mode . turn-on.auto-fill)
          (text-mode . turn-on-auto-fill))
   :config
   (setq org-default-notes-file "~/todo.org")
@@ -252,10 +249,7 @@
         '(("t" "Tasks" entry (file+headline org-default-notes-file "Tasks")
            "* TODO %?\n CREATED: %U")
           ("c" "Curious Questions" entry (file+headline org-default-notes-file "Curious Questions")
-           "* TODO %?\n CREATED: %U")))
-  (setq-default fill-column 80           ;; Let's avoid going over 80 columns
-                truncate-lines nil       ;; I never want to scroll horizontally
-                indent-tabs-mode nil))   ;; Use spaces instead of tabs
+           "* TODO %?\n CREATED: %U"))))
 
 (use-package org-bullets
   :hook (org-mode . org-bullets-mode))

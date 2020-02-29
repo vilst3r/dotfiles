@@ -6,6 +6,7 @@ set rnu number
 set ruler
 set showcmd
 set cursorline
+set colorcolumn=80
 
 " Bell
 set vb "no visual bell"
@@ -59,4 +60,3 @@ set expandtab " Convert tabs to spaces
 let @c='ggVG"+y'
 " Save entire line to system clipboard
 let @l='0v$h"+y'
-
