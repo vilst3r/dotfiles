@@ -124,7 +124,7 @@
 (use-package which-key
   :config
   (which-key-setup-side-window-bottom)
-  (setq which-key-idle-delay 0.05)
+  (setq which-key-idle-delay 1)
   (which-key-mode))
 
 ;; Sync PATH variable from bash shell to the emacs environment
@@ -231,7 +231,7 @@
 (use-package org
   :ensure org-plus-contrib
   :hook ((before-save . whitespace-cleanup)
-         (org-mode . turn-on.auto-fill)
+         (org-mode . turn-on-auto-fill)
          (text-mode . turn-on-auto-fill))
   :config
   (setq org-default-notes-file "~/todo.org")
@@ -243,6 +243,7 @@
   (setq org-enforce-todo-dependencies t)
   (setq org-reverse-note-order nil)
   (setq org-agenda-files (list org-default-notes-file))
+  (setq org-agenda-restore-windows-after-quit t)
   (global-set-key (kbd "C-c c") 'org-capture)
   (global-set-key (kbd "C-c a") 'org-agenda)
   (setq org-capture-templates
@@ -267,20 +268,20 @@
 
 (use-package elpy
   :hook
-  ((elpy-mode python-mode) . (lambda ()
-                               (setq fill-column 80)
-                               (turn-on-auto-fill)))
+  (elpy-mode . (lambda ()
+                 (setq fill-column 80)
+                 (setq tab-width 4)
+                 (setq whitespace-style 'indentation)
+                 (turn-on-auto-fill)))
   :init
   (elpy-enable)
   :config
   (setq python-shell-interpreter "python3")
-  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))) ;; Force elpy to use python 3
-
-(use-package py-autopep8
-  :hook ((elpy-mode python-mode) . py-autopep8-enable-on-save))
+  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules)))
 
 (use-package blacken
-  :hook ((elpy-mode python-mode) . blacken-mode))
+  :hook
+  (elpy-mode . blacken-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Javascript Development Setup

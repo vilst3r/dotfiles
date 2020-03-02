@@ -16,4 +16,5 @@
 - Markdown
 - Autopep8
 - Blacken
-
+- Flake8
+- Mypy
