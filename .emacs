@@ -236,14 +236,25 @@
   :config
   (setq org-default-notes-file "~/todo.org")
   (setq org-todo-keywords '((sequence "TODO(t)" "IN-PROGRESS(i)" "WAITING(w)" "REDO(r)"
-        "EXAMINE-SOLUTION(e)" "DONE(d)"))) ;; Subheading States
+                                      "EXAMINE-SOLUTION(e)" "DONE(d)"))) ;; Subheading States
   (setq org-ellipsis " ⤵")
   (setq org-catch-invisible-edits 'show)
   (setq org-return-follows-link t)
   (setq org-enforce-todo-dependencies t)
   (setq org-reverse-note-order nil)
   (setq org-agenda-files (list org-default-notes-file))
+  (setq org-agenda-text-search-extra-files '(agenda-archives))
   (setq org-agenda-restore-windows-after-quit t)
+  (setq org-agenda-show-all-dates t)
+  (setq org-agenda-skip-scheduled-if-done t)
+  (setq org-agenda-skip-deadline-if-done  t)
+  (setq org-agenda-custom-commands
+        '(("c" todo "DONE" nil) ;; shows all completed tasks in org agenda for archiving
+          ("u" alltodo ""
+           ((org-agenda-skip-function
+             (lambda ()
+               (org-agenda-skip-entry-if 'scheduled 'deadline 'regexp  "\n]+>")))
+            (org-agenda-overriding-header "Unscheduled TODO entries: ")))))
   (global-set-key (kbd "C-c c") 'org-capture)
   (global-set-key (kbd "C-c a") 'org-agenda)
   (setq org-capture-templates
