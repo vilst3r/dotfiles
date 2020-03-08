@@ -256,13 +256,29 @@
              (lambda ()
                (org-agenda-skip-entry-if 'scheduled 'deadline 'regexp  "\n]+>")))
             (org-agenda-overriding-header "Unscheduled TODO entries: ")))))
-  (global-set-key (kbd "C-c c") 'org-capture)
-  (global-set-key (kbd "C-c a") 'org-agenda)
   (setq org-capture-templates
         '(("t" "Tasks" entry (file+headline org-default-notes-file "Tasks")
            "* TODO %?\n CREATED: %U")
           ("c" "Curious Questions" entry (file+headline org-default-notes-file "Curious Questions")
-           "* TODO %?\n CREATED: %U"))))
+           "* TODO %?\n CREATED: %U")))
+  ;; support for source code execution in org file
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((emacs-lisp . t)
+     (shell      . t)
+     (python     . t)
+     (haskell    . t)
+     (ruby       . t)
+     (ocaml      . t)
+     (C          . t)  ;; Captial “C” gives access to C, C++, D
+     (dot        . t)
+     (latex      . t)
+     (org        . t)
+     (makefile   . t)))
+  ;; Preserve my indentation for source code during export.
+  (setq org-src-preserve-indentation t)
+  (setq org-latex-listings 'minted
+      org-latex-packages-alist '(("" "minted"))))
 
 (use-package org-bullets
   :hook (org-mode . org-bullets-mode))
