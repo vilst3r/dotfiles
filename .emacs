@@ -115,9 +115,9 @@
 
 ;; Utilities
 (electric-pair-mode 1) ;; Inserts registered paired s-expressions during editing
+(setq show-paren-delay 0)
+(setq show-paren-style 'mixed)
 (show-paren-mode 1)
-(customize-set-variable 'show-paren-delay 0)
-(customize-set-variable 'show-paren-style 'parenthesis)
 (fset 'yes-or-no-p 'y-or-n-p) ;; Shorten yes/no prompts
 
 ;; Configure which key package to highlight candidate commands
@@ -135,8 +135,7 @@
 
 ;; Simple split window navigation
 (use-package ace-window
-  :config
-  (global-set-key (kbd "M-o") 'ace-window))
+  :bind ("M-o" . ace-window))
 
 ;; Scrolling window with fixed cursor
 (global-set-key (kbd "M-n") (kbd "C-u 1 C-v"))
@@ -156,15 +155,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package magit
-  :config
-  (global-set-key (kbd "C-x g") 'magit-status))
+  :bind ("C-x g" . magit-status))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Projectile
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (use-package projectile
-  :config
-  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+  :bind
+  (:map projectile-mode-map
+        ("C-c p" . projectile-command-map))
+   :config
   (projectile-mode +1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -187,19 +187,18 @@
 
 (use-package helm-descbinds)
 (use-package helm
-  :config
-  (global-set-key (kbd "C-x m") 'helm-M-x)
-  (global-set-key (kbd "C-x b") 'helm-mini)
-  (global-set-key (kbd "C-c i") 'helm-imenu)
-  (global-set-key (kbd "C-h b") 'helm-descbinds)
-  (global-set-key (kbd "C-x C-r") 'helm-recentf)
-  (global-set-key (kbd "C-x C-f") 'helm-find-files)
-  (global-set-key (kbd "C-x r b") 'helm-filtered-bookmarks)
-  (global-set-key (kbd "M-y") 'helm-show-kill-ring)
-  (with-eval-after-load 'helm
-    (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ;; Enable TABs to persist
-                                                                   ;; helm options
-    (define-key helm-map (kbd "C-z") 'helm-select-action)))
+  :bind (("C-x m" . helm-M-x)
+         ("C-x b" . helm-mini)
+         ("C-c i" . helm-imenu)
+         ("C-h b" . helm-descbinds)
+         ("C-x C-f" . helm-find-files)
+         ("C-x r b" . helm-filtered-bookmarks)
+         ("M-y" . helm-show-kill-ring)
+         :map helm-map
+         ("TAB" . helm-execute-persistent-action)
+         ("<tab>" . helm-execute-persistent-action)
+         ("C-z" . helm-select-action)))
+
 
 (use-package helm-projectile
   :config
@@ -230,6 +229,8 @@
 
 (use-package org
   :ensure org-plus-contrib
+  :bind (("C-c c" . org-capture)
+         ("C-c a" . org-agenda))
   :hook ((before-save . whitespace-cleanup)
          (org-mode . turn-on-auto-fill)
          (text-mode . turn-on-auto-fill))
@@ -265,6 +266,9 @@
 
 (use-package org-bullets
   :hook (org-mode . org-bullets-mode))
+
+;; org export configurations
+(use-package ox-twbs) ;; Clean bootstrap HTML exports
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Normal Development Setup
@@ -303,18 +307,18 @@
 
 (use-package js2-mode
   :requires (js2-refactor xref-js2)
-  :init
-  (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+  :mode ("\\.js\\'" . js2-mode)
+  :bind (:map js2-mode-map
+              ("C-k" . js2r-kill) ;; Kill to EOL while keeping AST valid
+              :map js-mode-map
+              ("M-." . nil))
   :hook ((js2-mode . js2-imenu-extras-mode)
          (js2-mode . js2-refactor-mode)
          (xref-backend-functions . (lambda () (add-hook 'xref-backend-functions
-                                     #'xref-js2-xref-backend nil t))))
+                                                        #'xref-js2-xref-backend nil t))))
   :config
   (setq js2-basic-offset 2)
-  (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
-  (js2r-add-keybindings-with-prefix "C-c C-r")
-  (define-key js2-mode-map (kbd "C-k") #'js2r-kill)     ;; Kill to EOL while keeping AST valid
-  (define-key js-mode-map (kbd "M-.") nil))
+  (js2r-add-keybindings-with-prefix "C-c C-r"))
 
 ;; Typescript Configuration
 (defun setup-tide-mode ()
@@ -336,23 +340,19 @@
 
 ;; React Configuration
 (use-package web-mode
-  :init
-  (add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
-  (add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
+  :mode (("\\.tsx\\'" . web-mode)
+         ("\\.jsx\\'" . web-mode))
   :hook ((web-mode . (lambda ()
-                       (when (string-equal "tsx" (file-name-extension buffer-file-name))
-                        (setup-tide-mode))))
-         (web-mode . (lambda ()
-                       (when (string-equal "jsx" (file-name-extension buffer-file-name))
+                       (when (or (string-equal "tsx" (file-name-extension buffer-file-name))
+                                 (string-equal "jsx" (file-name-extension buffer-file-name)))
                          (setup-tide-mode)))))
   :config
-  ;; enable typescript-tslint checker
-  (flycheck-add-mode 'typescript-tslint 'web-mode)
-  ;; configure jsx-tide checker to run after your default jsx checker
-  (flycheck-add-mode 'javascript-eslint 'web-mode))
+  (flycheck-add-mode 'typescript-tslint 'web-mode)  ;; enable typescript-tslint checker
+  (flycheck-add-mode 'javascript-eslint 'web-mode))   ;; configure jsx-tide checker to run after
+                                                      ;; your default jsx checker
 
 
-;; Start Up files & window after all packages are loaded & configured
+;; Start up files & windows after all packages are loaded & configured
 (split-window-right)
 (other-window 1)
 (find-file "~/.emacs.d/init.el")
