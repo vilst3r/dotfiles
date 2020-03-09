@@ -1,0 +1,24 @@
+{
+    "workbench.colorTheme": "Monokai",
+	"window.zoomLevel": 1,
+    "editor.insertSpaces": false,
+    "editor.tabSize": 2,
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "workbench.editor.showTabs": true,
+    "breadcrumbs.enabled": false,
+    "editor.lineNumbers": "relative",
+    "window.openFilesInNewWindow": "default",
+    "workbench.editor.enablePreviewFromQuickOpen": false,
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "editor.multiCursorModifier": "alt",
+    "html.mirrorCursorOnMatchingTag": false,
+    "editor.rulers": [80],
+    "workbench.colorCustomizations": {
+        "editorRuler.foreground": "#78accc"
+    }
+}
