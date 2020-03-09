@@ -116,7 +116,7 @@
 ;; Utilities
 (electric-pair-mode 1) ;; Inserts registered paired s-expressions during editing
 (setq show-paren-delay 0)
-(setq show-paren-style 'mixed)
+(setq show-paren-style 'parenthesis)
 (show-paren-mode 1)
 (fset 'yes-or-no-p 'y-or-n-p) ;; Shorten yes/no prompts
 
@@ -136,6 +136,12 @@
 ;; Simple split window navigation
 (use-package ace-window
   :bind ("M-o" . ace-window))
+
+;; Emulate iTerm window navigation
+(global-set-key (kbd "s-]") (lambda () (interactive) (other-window 1)))
+(global-set-key (kbd "s-[") (lambda () (interactive) (other-window -1)))
+(global-set-key (kbd "s-w") 'delete-window)
+(global-set-key (kbd "s-d") 'split-window-right)
 
 ;; Scrolling window with fixed cursor
 (global-set-key (kbd "M-n") (kbd "C-u 1 C-v"))
