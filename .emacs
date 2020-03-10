@@ -193,6 +193,7 @@
 
 (use-package helm-descbinds)
 (use-package helm
+  :init (helm-mode t)
   :bind (("C-x m" . helm-M-x)
          ("C-x b" . helm-mini)
          ("C-c i" . helm-imenu)
@@ -209,6 +210,12 @@
 (use-package helm-projectile
   :config
   (helm-projectile-on))
+
+ ;; Helm for org headlines and keywords completion.
+(use-package helm-org
+  :config
+  (add-to-list 'helm-completing-read-handlers-alist
+               '(org-set-tags-command . helm-org-completing-read-tags)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Latex Setup
@@ -250,18 +257,24 @@
   (setq org-enforce-todo-dependencies t)
   (setq org-reverse-note-order nil)
   (setq org-agenda-files (list org-default-notes-file))
-  (setq org-agenda-text-search-extra-files '(agenda-archives))
-  (setq org-agenda-restore-windows-after-quit t)
+  (setq org-agenda-tags-column -10)
   (setq org-agenda-show-all-dates t)
   (setq org-agenda-skip-scheduled-if-done t)
   (setq org-agenda-skip-deadline-if-done  t)
+  (setq org-agenda-text-search-extra-files '(agenda-archives))
+  (setq org-agenda-restore-windows-after-quit t)
+  (setq org-log-redeadline 'time)
+  (setq org-log-reschedule 'time)
   (setq org-agenda-custom-commands
-        '(("c" todo "DONE" nil) ;; shows all completed tasks in org agenda for archiving
-          ("u" alltodo ""
+        '(("c" "Completed tasks for archiving" todo "DONE"
+           ((org-agenda-overriding-header "Completed tasks for archiving")))
+          ("u" "Unscheduled TODO tasks" tags-todo "tasks"
            ((org-agenda-skip-function
              (lambda ()
                (org-agenda-skip-entry-if 'scheduled 'deadline 'regexp  "\n]+>")))
-            (org-agenda-overriding-header "Unscheduled TODO entries: ")))))
+            (org-agenda-overriding-header "Unscheduled TODO Tasks: ")))
+          ("i" "Dangling tasks in progress" tags-todo "+tasks+TODO=\"IN-PROGRESS\""
+           ((org-agenda-overriding-header "Dangling tasks in progress")))))
   (setq org-capture-templates
         '(("t" "Tasks" entry (file+headline org-default-notes-file "Tasks")
            "* TODO %?\n CREATED: %U")
@@ -284,10 +297,21 @@
   ;; Preserve my indentation for source code during export.
   (setq org-src-preserve-indentation t)
   (setq org-latex-listings 'minted
-      org-latex-packages-alist '(("" "minted"))))
+        org-latex-packages-alist '(("" "minted")))
+  (setq org-lowest-priority ?D) ;; Now org-speed-key ‘C-c ,’ gives 4 options
+  (setq org-priority-faces
+        '((?A :foreground "red" :weight bold)
+          (?B . "orange")
+          (?C . "yellow")
+          (?D . "green"))))
 
 (use-package org-bullets
   :hook (org-mode . org-bullets-mode))
+
+(use-package org-fancy-priorities
+  :diminish t
+  :hook   (org-mode . org-fancy-priorities-mode)
+  :custom (org-fancy-priorities-list '("HIGH" "MID" "LOW" "OPTIONAL")))
 
 ;; org export configurations
 (use-package ox-twbs) ;; Clean bootstrap HTML exports
