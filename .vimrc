@@ -8,6 +8,10 @@ set showcmd
 set cursorline
 set colorcolumn=80
 
+" Auto-Fill-Mode
+set textwidth=80
+set wrap
+
 " Bell
 set vb "no visual bell"
 set t_vb= "no visual bell"
