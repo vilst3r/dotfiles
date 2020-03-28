@@ -319,87 +319,8 @@
 ;; org export configurations
 (use-package ox-twbs) ;; Clean bootstrap HTML exports
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Normal Development Setup
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (use-package flycheck
   :init (global-flycheck-mode))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Python Development Setup
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package elpy
-  :hook
-  (elpy-mode . (lambda ()
-                 (setq fill-column 80)
-                 (setq tab-width 4)
-                 (setq whitespace-style 'indentation)
-                 (turn-on-auto-fill)))
-  :init
-  (elpy-enable)
-  :config
-  (setq python-shell-interpreter "python3")
-  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules)))
-
-(use-package blacken
-  :hook
-  (elpy-mode . blacken-mode))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Javascript Development Setup
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package js2-refactor)
-(use-package xref-js2)
-
-(use-package js2-mode
-  :requires (js2-refactor xref-js2)
-  :mode ("\\.js\\'" . js2-mode)
-  :bind (:map js2-mode-map
-              ("C-k" . js2r-kill) ;; Kill to EOL while keeping AST valid
-              :map js-mode-map
-              ("M-." . nil))
-  :hook ((js2-mode . js2-imenu-extras-mode)
-         (js2-mode . js2-refactor-mode)
-         (xref-backend-functions . (lambda () (add-hook 'xref-backend-functions
-                                                        #'xref-js2-xref-backend nil t))))
-  :config
-  (setq js2-basic-offset 2)
-  (js2r-add-keybindings-with-prefix "C-c C-r"))
-
-;; Typescript Configuration
-(defun setup-tide-mode ()
-  (interactive)
-  (tide-setup)
-  (flycheck-mode +1)
-  (setq flycheck-check-syntax-automatically '(save mode-enabled))
-  (eldoc-mode +1)
-  (tide-hl-identifier-mode +1)
-  (company-mode +1))
-
-(use-package tide
-  :after (typescript-mode company flycheck)
-  :hook ((typescript-mode . setup-tide-mode)
-         (before-save . tide-format-before-save))
-  :config
-  (setq flycheck-check-syntax-automatically '(save mode-enabled))
-  (setq company-tooltip-align-annotations t))    ;; aligns annotation to the right hand side
-
-;; React Configuration
-(use-package web-mode
-  :mode (("\\.tsx\\'" . web-mode)
-         ("\\.jsx\\'" . web-mode))
-  :hook ((web-mode . (lambda ()
-                       (when (or (string-equal "tsx" (file-name-extension buffer-file-name))
-                                 (string-equal "jsx" (file-name-extension buffer-file-name)))
-                         (setup-tide-mode)))))
-  :config
-  (flycheck-add-mode 'typescript-tslint 'web-mode)  ;; enable typescript-tslint checker
-  (flycheck-add-mode 'javascript-eslint 'web-mode))   ;; configure jsx-tide checker to run after
-                                                      ;; your default jsx checker
-
 
 ;; Start up files & windows after all packages are loaded & configured
 (split-window-right)
