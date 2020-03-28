@@ -154,7 +154,7 @@
 (use-package markdown-mode)
 
 (use-package page-break-lines
-  :hook ((emacs-lisp-mode markdown-mode) . page-break-lines-mode))
+  :hook ((emacs-lisp-mode text-mode) . page-break-lines-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Magit
@@ -171,7 +171,8 @@
   (:map projectile-mode-map
         ("C-c p" . projectile-command-map))
    :config
-  (projectile-mode +1))
+   (projectile-mode +1)
+   (setq projectile-use-git-grep 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Evil
@@ -253,6 +254,8 @@
                                       "EXAMINE-SOLUTION(e)" "DONE(d)"))) ;; Subheading States
   (setq org-ellipsis " ⤵")
   (setq org-catch-invisible-edits 'show)
+  (setq org-src-preserve-indentation t)
+  (setq org-src-tab-acts-natively t)
   (setq org-return-follows-link t)
   (setq org-enforce-todo-dependencies t)
   (setq org-reverse-note-order nil)
