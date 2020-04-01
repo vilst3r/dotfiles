@@ -64,3 +64,15 @@ set expandtab " Convert tabs to spaces
 let @c='ggVG"+y'
 " Save entire line to system clipboard
 let @l='0v$h"+y'
+"
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => C++ Configuration
+" See "https://linux.die.net/man/1/g++" for info on compiler options
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+" Build cpp buffer
+autocmd filetype cpp nnoremap + :w <bar> !g++ -std=c++14 -O2 -Wall % -o %:r<CR>
+" Executes compiled file of cpp buffer if it exists
+autocmd filetype cpp nnoremap _ :w <bar> :!./%:r<CR>
+autocmd FileType cpp setlocal shiftwidth=2 softtabstop=2 expandtab
+
