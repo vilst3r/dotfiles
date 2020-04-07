@@ -1,84 +1,84 @@
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => VIM user interface
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " General
-set rnu number
-set ruler
+set number
+set relativenumber
 set showcmd
 set cursorline
-set colorcolumn=80
+set ruler " Show line & column no. seperated by a comma
+set vb t_vb= " Disable visual & audio bell
+set backspace=indent,eol,start " Allow backspace modification for the following
 
 " Auto-Fill-Mode
+set colorcolumn=80
 set textwidth=80
 set wrap
 
-" Bell
-set vb "no visual bell"
-set t_vb= "no visual bell"
-
 " Searching
+set incsearch "Incremental search"
 set hlsearch
 set ignorecase "Ignore case when searching
 set smartcase
-set incsearch "Incremental search"
 
 " GUI
-set background=dark
 syntax enable
+set background=dark
 colorscheme gruvbox
-" Configure cursor line to suit Pro profile theme of terminal
+" Better visual cursor line for iTerm
 hi cursorline cterm=underline ctermbg=black
 
-" Keymappings
-let mapleader=","       " leader is comma
-nnoremap <leader><space> :nohlsearch<CR>    "turn off search highlight
-
-" Move vertically within a single line that's wrapped
+" General Keymappings
+let mapleader="," " For event based mappings below
+" Get buffer x (number or substring candidate)
+nnoremap gb :ls<CR>:b<Space>
+" Move vertically within a single line that's soft wrapped
 nnoremap j gj
 nnoremap k gk
+" Turn off search highlighting & clear query at bottom of window
+nnoremap <silent> <Space> :nohlsearch<Bar>:echo<CR>
 
-" Allow backward compatibility for latest version of vim in insert mode
-set backspace=indent,eol,start
+" Event-based Keymappings
+autocmd FileType help noremap <buffer> q :q<CR>
+" Build cpp buffer
+autocmd filetype cpp nnoremap <leader>c 
+                            \:w <bar> !g++ -std=c++14 -O2 -Wall % -o %:r<CR>
+" Executes compiled file of cpp buffer if it exists
+autocmd filetype cpp nnoremap <leader>r :w <bar> :!./%:r<CR>
+autocmd filetype cpp nnoremap <leader>m :w <bar> :!make<CR>
+autocmd filetype python nnoremap <leader>r :w <bar> !python3 %<CR>
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Files, backups and undo
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Turn backup off, since most stuff is in SVN, git anyway...
 set nobackup
 set nowb
 set noswapfile
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Text, tab and indent related
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 filetype plugin indent on
-" Settings below will override if file type not supported
-set tabstop=4 " show existing tabs with 4 spaces
-set shiftwidth=4 " indenting '>', use 4 spaces width
-set expandtab " Convert tabs to spaces
+set tabstop=2     " Show existing tabs with 4 spaces
+set shiftwidth=4  " Indenting '>', use 4 spaces of the column width
+set softtabstop=4 " Number of columns for a TAB
+set expandtab     " Convert tabs to spaces
+autocmd fileType cpp setlocal shiftwidth=2 softtabstop=2
+autocmd fileType javascript setlocal shiftwidth=2 softtabstop=2
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => General macros
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Save entire buffer to system clipboard (assuming you have osx clipboard enabled)
-let @c='ggVG"+y'
-" Save entire line to system clipboard
-let @l='0v$h"+y'
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+let @c='ggVG"+y' "Save entire buffer to system clipboard
+let @l='0v$h"+y' "Save entire line to system clipboard
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => C++ Configuration
-" See "https://linux.die.net/man/1/g++" for info on compiler options
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-" Build cpp buffer
-autocmd filetype cpp nnoremap _ :w <bar> !g++ -std=c++14 -O2 -Wall % -o %:r<CR>
-" Executes compiled file of cpp buffer if it exists
-autocmd filetype cpp nnoremap + :w <bar> :!./%:r<CR>
-autocmd filetype cpp nnoremap <C-_> :w <bar> :!make<CR>
-autocmd fileType cpp setlocal shiftwidth=2 softtabstop=2 expandtab
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => Python Configuration
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-autocmd filetype python nnoremap + :w <bar> !python3 %<CR>
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Powerline
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Powerline
+let g:repository_root = trim(system('python3 -m site --user-site'))
+execute 'set rtp+=' . g:repository_root . '/powerline/bindings/vim'
+set laststatus=2
+set t_Co=256
 
