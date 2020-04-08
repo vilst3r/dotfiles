@@ -1,6 +1,6 @@
 # Dotfiles
 
-General repository containing all my personal configuration files.
+Repository containing all my personal dotfile configurations.
 
 ### General Vim Usage
 - General config to source from for vim emulators on IDEs
