@@ -98,6 +98,7 @@
               truncate-lines nil      ;; I never want to scroll horizontally
               indent-tabs-mode nil)   ;; Use spaces instead of tabs
 
+(use-package markdown-mode)
 ;; Mark line limit
 (use-package fill-column-indicator
   :hook
@@ -105,6 +106,7 @@
                         (setq fill-column 100)
                         (turn-on-auto-fill))))
   (prog-mode . fci-mode)
+  (markdown-mode . fci-mode)
   :config
   (setq fci-rule-width 2)
   (setq fci-rule-color "#D95468"))
@@ -150,8 +152,6 @@
 ;; Set autocomplete across all modes
 (use-package company
   :hook (after-init . global-company-mode))
-
-(use-package markdown-mode)
 
 (use-package page-break-lines
   :hook ((emacs-lisp-mode text-mode) . page-break-lines-mode))
