@@ -1,7 +1,7 @@
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Optional - Plugin Management (configurations are near the EOF)
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Automatica installation with autoload directory
+" Automatic installation with autoload directory
 if empty(glob('~/.vim/autoload/plug.vim'))
   silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
     \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
@@ -11,6 +11,7 @@ endif
 call plug#begin('~/.vim/plugged')
 Plug 'morhetz/gruvbox'
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'ludovicchabant/vim-gutentags', { 'do': { -> fzf#install() } }
 call plug#end()
 
 " Automatic installation of missing plugins
@@ -87,6 +88,11 @@ autocmd filetype cpp nnoremap <leader>c
 autocmd filetype cpp nnoremap <leader>r :w <bar> :!./%:r<CR>
 autocmd filetype cpp nnoremap <leader>m :w <bar> :!make<CR>
 autocmd filetype python nnoremap <leader>r :w <bar> !python3 %<CR>
+
+" Tags
+set tags=./tags;,tags;
+nnoremap <C-]> g<C-]>
+let g:gutentags_cache_dir = expand('~/.cache/vim/ctags/')
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Files, backups and undo
