@@ -10,8 +10,8 @@ endif
 
 call plug#begin('~/.vim/plugged')
 Plug 'morhetz/gruvbox'
+Plug 'ludovicchabant/vim-gutentags'
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
-Plug 'ludovicchabant/vim-gutentags', { 'do': { -> fzf#install() } }
 call plug#end()
 
 " Automatic installation of missing plugins
@@ -38,6 +38,8 @@ set textwidth=80
 set wrap
 
 " Searching
+set path+=** " Recursive search from current directory
+set wildmenu " Show all matching files when we tab complete
 set incsearch "Incremental search
 set hlsearch
 set ignorecase "Ignore case when searching

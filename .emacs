@@ -14,9 +14,9 @@
 (require 'package)
 
 ;; Configure registry to install packages
-(setq package-archives '(("org"       . "http://orgmode.org/elpa/")
-                         ("gnu"       . "http://elpa.gnu.org/packages/")
-                         ("melpa"     . "http://melpa.org/packages/")))
+(setq package-archives '(("org"   . "http://orgmode.org/elpa/")
+                         ("gnu"   . "http://elpa.gnu.org/packages/")
+                         ("melpa" . "http://melpa.org/packages/")))
 
 ;; Activate all installed packages
 (package-initialize)
@@ -30,11 +30,11 @@
 
 ;; Automatically update old packages
 (use-package auto-package-update
-             :defer 10
-             :config
-             (setq auto-package-update-delete-old-versions t)
-             (setq auto-package-update-hide-results t)
-             (auto-package-update-maybe))
+  :defer 10
+  :config
+  (setq auto-package-update-delete-old-versions t)
+  (setq auto-package-update-hide-results t)
+  (auto-package-update-maybe))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; IDE Initialization
@@ -61,33 +61,32 @@
 
 ;; GUI features
 (setq inhibit-startup-message t)
-(mouse-avoidance-mode 'animate)
+(setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow)) ;; Soft wrap lines
+(global-visual-line-mode 1)
 (global-hl-line-mode 1)
+(mouse-avoidance-mode 'animate)
+(fset 'yes-or-no-p 'y-or-n-p) ;; Shorten yes/no prompts
+
+;; Parenthesis configurations
+(electric-pair-mode 1) ;; Inserts registered paired s-expressions during editing
+(setq show-paren-delay 0)
+(setq show-paren-style 'parenthesis)
+(show-paren-mode 1)
 
 ;; Hide unused GUI features to gain more screen pixels
 (tool-bar-mode   -1)  ;; Remove the large Word-like editing icons at the top
 (scroll-bar-mode -1)  ;; Remove visual scroll bar & rely on modeline buffer percentage
 (menu-bar-mode   -1)  ;; Remove the large Mac OS top pane menu options
 
-;; Highlight cursor during navigation
-(use-package beacon
-  :diminish
-  :config
-  (setq beacon-color "#539AFC")
-  (beacon-mode 1))
+;; Emulate iTerm window navigation
+(global-set-key (kbd "s-]") (lambda () (interactive) (other-window 1)))
+(global-set-key (kbd "s-[") (lambda () (interactive) (other-window -1)))
+(global-set-key (kbd "s-w") 'delete-window)
+(global-set-key (kbd "s-d") 'split-window-right)
 
-;; Visual Styling - Doom theme
-(use-package doom-modeline)
-(use-package all-the-icons)
-(use-package doom-themes
-  :requires doom-modeline
-  :config
-  (load-theme 'doom-city-lights t)
-  (setq doom-themes-enable-bold t)
-  (setq doom-themes-enable-italic t)
-  (doom-modeline-mode 1)
-  (doom-themes-visual-bell-config)
-  (doom-themes-org-config))
+;; Scrolling window with fixed cursor
+(global-set-key (kbd "M-n") (kbd "C-u 1 C-v"))
+(global-set-key (kbd "M-p") (kbd "C-u 1 M-v"))
 
 ;; Buffer formatting
 (setq column-number-mode t)
@@ -97,30 +96,35 @@
 (setq-default fill-column 80          ;; Let's avoid going over 80 columns
               truncate-lines nil      ;; I never want to scroll horizontally
               indent-tabs-mode nil)   ;; Use spaces instead of tabs
+(add-hook 'emacs-lisp-mode-hook (lambda () (setq fill-column 100)))
+(add-hook 'prog-mode-hook 'turn-on-auto-fill)
+(add-hook 'text-mode-hook 'turn-on-auto-fill)
+(add-hook 'before-save-hook 'whitespace-cleanup)
+
+;; Visual Styling - Doom theme
+(use-package doom-modeline)
+(use-package all-the-icons)
+(use-package doom-themes
+  :config
+  (load-theme 'doom-city-lights t)
+  (setq doom-themes-enable-bold t)
+  (setq doom-themes-enable-italic t)
+  (doom-modeline-mode 1)
+  (doom-themes-visual-bell-config)
+  (doom-themes-org-config))
+
+;; Highlight cursor during navigation
+(use-package beacon
+  :config
+  (setq beacon-color "#539AFC")
+  (beacon-mode 1))
 
 (use-package markdown-mode)
-;; Mark line limit
 (use-package fill-column-indicator
-  :hook
-  ((emacs-lisp-mode . (lambda ()
-                        (setq fill-column 100)
-                        (turn-on-auto-fill))))
-  (prog-mode . fci-mode)
-  (markdown-mode . fci-mode)
+  :hook ((prog-mode markdown-mode) . fci-mode)
   :config
   (setq fci-rule-width 2)
   (setq fci-rule-color "#D95468"))
-
-;; Wrap lines
-(setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
-(global-visual-line-mode 1)
-
-;; Utilities
-(electric-pair-mode 1) ;; Inserts registered paired s-expressions during editing
-(setq show-paren-delay 0)
-(setq show-paren-style 'parenthesis)
-(show-paren-mode 1)
-(fset 'yes-or-no-p 'y-or-n-p) ;; Shorten yes/no prompts
 
 ;; Configure which key package to highlight candidate commands
 (use-package which-key
@@ -138,16 +142,6 @@
 ;; Simple split window navigation
 (use-package ace-window
   :bind ("M-o" . ace-window))
-
-;; Emulate iTerm window navigation
-(global-set-key (kbd "s-]") (lambda () (interactive) (other-window 1)))
-(global-set-key (kbd "s-[") (lambda () (interactive) (other-window -1)))
-(global-set-key (kbd "s-w") 'delete-window)
-(global-set-key (kbd "s-d") 'split-window-right)
-
-;; Scrolling window with fixed cursor
-(global-set-key (kbd "M-n") (kbd "C-u 1 C-v"))
-(global-set-key (kbd "M-p") (kbd "C-u 1 M-v"))
 
 ;; Set autocomplete across all modes
 (use-package company
@@ -179,14 +173,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package evil  ;; This package installs undo-tree as a dependency
-  :hook
-  (prog-mode . hs-minor-mode)
   :init
   (setq evil-want-C-u-scroll t)              ;; Override undo-tree with C-U when using evil mode
   (setq evil-default-state 'emacs)           ;; Emacs on default for all buffers
   (setq undo-tree-visualizer-timestamps t)   ;; Each node in the undo tree should have a timestamp.
   (setq undo-tree-visualizer-diff t) ;; Show a diff window displaying changes between undo nodes.
-  (evil-mode 1))
+  (evil-mode 1)
+  :config
+  (add-to-list 'evil-normal-state-modes 'prog-mode)
+  (add-to-list 'evil-emacs-state-modes 'emacs-lisp-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helm
@@ -207,7 +202,7 @@
          ("<tab>" . helm-execute-persistent-action)
          ("C-z" . helm-select-action)))
 
-
+;; Helm for projectile search
 (use-package helm-projectile
   :config
   (helm-projectile-on))
@@ -245,9 +240,6 @@
   :ensure org-plus-contrib
   :bind (("C-c c" . org-capture)
          ("C-c a" . org-agenda))
-  :hook ((before-save . whitespace-cleanup)
-         (org-mode . turn-on-auto-fill)
-         (text-mode . turn-on-auto-fill))
   :config
   (setq org-default-notes-file "~/todo.org")
   (setq org-todo-keywords '((sequence "TODO(t)" "IN-PROGRESS(i)" "WAITING(w)" "REDO(r)"
@@ -283,22 +275,7 @@
            "* TODO %?\n CREATED: %U")
           ("c" "Curious Questions" entry (file+headline org-default-notes-file "Curious Questions")
            "* TODO %?\n CREATED: %U")))
-  ;; support for source code execution in org file
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((emacs-lisp . t)
-     (shell      . t)
-     (python     . t)
-     (haskell    . t)
-     (ruby       . t)
-     (ocaml      . t)
-     (C          . t)  ;; Captial “C” gives access to C, C++, D
-     (dot        . t)
-     (latex      . t)
-     (org        . t)
-     (makefile   . t)))
-  ;; Preserve my indentation for source code during export.
-  (setq org-src-preserve-indentation t)
+  (setq org-src-preserve-indentation t)   ;; Preserve my indentation for source code during export
   (setq org-latex-listings 'minted
         org-latex-packages-alist '(("" "minted")))
   (setq org-lowest-priority ?D) ;; Now org-speed-key ‘C-c ,’ gives 4 options
@@ -306,21 +283,32 @@
         '((?A :foreground "red" :weight bold)
           (?B . "orange")
           (?C . "yellow")
-          (?D . "green"))))
+          (?D . "green")))
+  ;; support for source code execution in org file
+  (org-babel-do-load-languages
+   'org-babel-load-languages '((emacs-lisp . t)
+                               (shell      . t)
+                               (python     . t)
+                               (haskell    . t)
+                               (ruby       . t)
+                               (C          . t)  ;; Captial “C” gives access to C, C++, D
+                               (dot        . t)
+                               (latex      . t))))
 
 (use-package org-bullets
   :hook (org-mode . org-bullets-mode))
 
 (use-package org-fancy-priorities
-  :diminish t
   :hook   (org-mode . org-fancy-priorities-mode)
   :custom (org-fancy-priorities-list '("HIGH" "MID" "LOW" "OPTIONAL")))
 
-;; org export configurations
-(use-package ox-twbs) ;; Clean bootstrap HTML exports
+;; Export a Twitter Bootstrap HTML format of org file
+(use-package ox-twbs)
 
 (use-package flycheck
-  :init (global-flycheck-mode))
+  :init (global-flycheck-mode)
+  :config
+  (setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc)))
 
 ;; Start up files & windows after all packages are loaded & configured
 (split-window-right)
