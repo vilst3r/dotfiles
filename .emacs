@@ -37,10 +37,9 @@
   (auto-package-update-maybe))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; IDE Initialization
+;; GUI 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Transparency function
 (defun toggle-transparency ()
   "Toggle transparency of Emacs on & off. (Active-Opacity . Inactie-Opacity)."
   (interactive)
@@ -50,14 +49,13 @@
 
 (define-key global-map (kbd "C-c t") 'toggle-transparency)
 
-;; Load full screen on startup
-(add-to-list 'default-frame-alist '(fullscreen . maximized))
-;; Load at 85% transparency on startup
-(set-frame-parameter (selected-frame) 'alpha '(85 . 75))
+(add-to-list 'default-frame-alist '(fullscreen . maximized)) ;; Load full screen on startup
+(set-frame-parameter (selected-frame) 'alpha '(85 . 75)) ;; Load at 85% transparency on startup
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; General
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Hide unused GUI features to gain more screen pixels
+(tool-bar-mode   -1)  ;; Remove the large Word-like editing icons at the top
+(scroll-bar-mode -1)  ;; Remove visual scroll bar & rely on modeline buffer percentage
+(menu-bar-mode   -1)  ;; Remove the large Mac OS top pane menu options
 
 ;; GUI features
 (setq inhibit-startup-message t)
@@ -67,16 +65,14 @@
 (mouse-avoidance-mode 'animate)
 (fset 'yes-or-no-p 'y-or-n-p) ;; Shorten yes/no prompts
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; General
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Parenthesis configurations
 (electric-pair-mode 1) ;; Inserts registered paired s-expressions during editing
 (setq show-paren-delay 0)
 (setq show-paren-style 'parenthesis)
 (show-paren-mode 1)
-
-;; Hide unused GUI features to gain more screen pixels
-(tool-bar-mode   -1)  ;; Remove the large Word-like editing icons at the top
-(scroll-bar-mode -1)  ;; Remove visual scroll bar & rely on modeline buffer percentage
-(menu-bar-mode   -1)  ;; Remove the large Mac OS top pane menu options
 
 ;; Emulate iTerm window navigation
 (global-set-key (kbd "s-]") (lambda () (interactive) (other-window 1)))
@@ -92,14 +88,29 @@
 (setq column-number-mode t)
 (setq size-indication-mode t)
 (setq echo-keystrokes .1)
+
 (setq-default display-line-numbers 'relative)
-(setq-default fill-column 80          ;; Let's avoid going over 80 columns
-              truncate-lines nil      ;; I never want to scroll horizontally
-              indent-tabs-mode nil)   ;; Use spaces instead of tabs
-(add-hook 'emacs-lisp-mode-hook (lambda () (setq fill-column 100)))
-(add-hook 'prog-mode-hook 'turn-on-auto-fill)
-(add-hook 'text-mode-hook 'turn-on-auto-fill)
+(setq-default whitespace-style '(face lines-tail) ;; Highlight lines past fill column
+              truncate-lines nil                  ;; I never want to scroll horizontally
+              indent-tabs-mode nil)               ;; Use spaces instead of tabs
+
+(defun setup-autofill (value &optional toggle-whitespace-mode)
+  "Initializes fill column, highlights characters past fill column & hard wraps on newline"
+  (interactive)
+  (setq fill-column value)
+  (auto-fill-mode 1)
+  (when toggle-whitespace-mode
+    (whitespace-mode 0)    
+    (setq whitespace-line-column value)
+    (whitespace-mode 1)))
+
 (add-hook 'before-save-hook 'whitespace-cleanup)
+
+(add-hook 'prog-mode-hook (lambda () (setup-autofill 80 t)))
+(add-hook 'text-mode-hook (lambda () (setup-autofill 80 nil)))
+
+(add-hook 'emacs-lisp-mode-hook (lambda () (setup-autofill 100 t)))
+(add-hook 'markdown-mode-hook (lambda () (setup-autofill 80 t)))
 
 ;; Visual Styling - Doom theme
 (use-package doom-modeline)
@@ -120,11 +131,6 @@
   (beacon-mode 1))
 
 (use-package markdown-mode)
-(use-package fill-column-indicator
-  :hook ((prog-mode markdown-mode) . fci-mode)
-  :config
-  (setq fci-rule-width 2)
-  (setq fci-rule-color "#D95468"))
 
 ;; Configure which key package to highlight candidate commands
 (use-package which-key
