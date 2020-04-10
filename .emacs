@@ -65,6 +65,9 @@
 (mouse-avoidance-mode 'animate)
 (fset 'yes-or-no-p 'y-or-n-p) ;; Shorten yes/no prompts
 
+(setq async-shell-command-display-buffer nil) ;; No pop-up after async command
+(global-undo-tree-mode) ;; Unable simple redo key + visual undo tree to checkout branches
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; General
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -83,6 +86,8 @@
 ;; Scrolling window with fixed cursor
 (global-set-key (kbd "M-n") (kbd "C-u 1 C-v"))
 (global-set-key (kbd "M-p") (kbd "C-u 1 M-v"))
+
+(global-set-key (kbd "C-j") (lambda () (interactive) (join-line -1))) ;; Join line to next line
 
 ;; Buffer formatting
 (setq column-number-mode t)
@@ -173,21 +178,6 @@
    :config
    (projectile-mode +1)
    (setq projectile-use-git-grep 1))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Evil
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package evil  ;; This package installs undo-tree as a dependency
-  :init
-  (setq evil-want-C-u-scroll t)              ;; Override undo-tree with C-U when using evil mode
-  (setq evil-default-state 'emacs)           ;; Emacs on default for all buffers
-  (setq undo-tree-visualizer-timestamps t)   ;; Each node in the undo tree should have a timestamp.
-  (setq undo-tree-visualizer-diff t) ;; Show a diff window displaying changes between undo nodes.
-  (evil-mode 1)
-  :config
-  (add-to-list 'evil-normal-state-modes 'prog-mode)
-  (add-to-list 'evil-emacs-state-modes 'emacs-lisp-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helm
@@ -315,6 +305,16 @@
   :init (global-flycheck-mode)
   :config
   (setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Python Configurations
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(use-package elpy
+  :init
+  (elpy-enable)
+  :hook
+  (elpy-mode . py-autopep8-enable-on-save)
+  (elpy-mode . (lambda () (highlight-indentation-mode -1))))
 
 ;; Start up files & windows after all packages are loaded & configured
 (split-window-right)
