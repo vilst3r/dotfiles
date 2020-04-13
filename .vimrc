@@ -48,7 +48,7 @@ set smartcase
 " GUI
 syntax enable
 set background=dark
-colorscheme gruvbox
+silent! colorscheme gruvbox
 " Better visual cursor line for iTerm
 hi cursorline cterm=underline ctermbg=black
 
@@ -77,19 +77,23 @@ function s:killLine()
     endif
 endfunction
 cnoremap <C-k> <C-\>e <SID>killLine()<CR>
-" cnoremap <C-k> <C-\>e getcmdpos() == 1 ?  '' : getcmdline()[:getcmdpos()-2]<CR>
 " Turn off search highlighting & clear query at bottom of window
 nnoremap <silent> <Space> :nohlsearch<Bar>:echo<CR>
 
 " Event-based Keymappings
-autocmd FileType help noremap <buffer> q :q<CR>
-" Build cpp buffer
-autocmd filetype cpp nnoremap <leader>c
-                            \:w <bar> !g++ -std=c++14 -O2 -Wall % -o %:r<CR>
-" Executes compiled file of cpp buffer if it exists
-autocmd filetype cpp nnoremap <leader>r :w <bar> :!./%:r<CR>
-autocmd filetype cpp nnoremap <leader>m :w <bar> :!make<CR>
-autocmd filetype python nnoremap <leader>r :w <bar> !python3 %<CR>
+augroup main
+    " Clear autocommands of this group when opening new vim buffer
+    autocmd!
+    autocmd FileType help noremap <buffer> q :q<CR>
+
+    " Build cpp buffer
+    autocmd filetype cpp nnoremap <leader>c :w <bar>
+                                    \!g++ -std=c++14 -O2 -Wall % -o %:r<CR>
+    " Executes compiled file of cpp buffer if it exists
+    autocmd filetype cpp nnoremap <leader>r :w <bar> :!./%:r<CR>
+    autocmd filetype cpp nnoremap <leader>m :w <bar> :!make<CR>
+    autocmd filetype python nnoremap <leader>r :w <bar> !python3 %<CR>
+augroup end
 
 " Tags
 set tags=./tags;,tags;

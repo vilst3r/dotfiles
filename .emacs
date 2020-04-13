@@ -186,13 +186,16 @@
 (use-package helm-descbinds)
 (use-package helm
   :init (helm-mode t)
-  :bind (("C-x m" . helm-M-x)
-         ("C-x b" . helm-mini)
-         ("C-c i" . helm-imenu)
-         ("C-h b" . helm-descbinds)
-         ("C-x C-f" . helm-find-files)
-         ("C-x r b" . helm-filtered-bookmarks)
+  :bind (("C-c i" . helm-imenu)
          ("M-y" . helm-show-kill-ring)
+         :map ctl-x-map
+         ("m" . helm-M-x)
+         ("b" . helm-mini)
+         ("C-f" . helm-find-files)
+         ("r b" . helm-filtered-bookmarks)
+         :map help-map
+         ("b" . helm-descbinds)
+         ("d" . helm-apropos)
          :map helm-map
          ("TAB" . helm-execute-persistent-action)
          ("<tab>" . helm-execute-persistent-action)
@@ -314,8 +317,14 @@
   (elpy-enable)
   :hook
   (elpy-mode . py-autopep8-enable-on-save)
-  (elpy-mode . (lambda () (highlight-indentation-mode -1))))
+  (elpy-mode . (lambda () (highlight-indentation-mode -1)))
+  (elpy-mode . (lambda () (unless pyvenv-virtual-env
+                            (pyvenv-activate "venv")))))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Initial window setup
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Start up files & windows after all packages are loaded & configured
 (split-window-right)
 (other-window 1)
