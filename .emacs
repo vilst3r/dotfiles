@@ -21,7 +21,7 @@
 ;; Activate all installed packages
 (package-initialize)
 
-;; Installs missing packages via boostrapping to the 'use-package' module
+;; Installs missing packages via bootstrapping to the 'use-package' module
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
 (require 'use-package)
@@ -47,7 +47,7 @@
       (set-frame-parameter (selected-frame) 'alpha '(85 . 75))
     (set-frame-parameter (selected-frame) 'alpha '(100 . 85))))
 
-(define-key global-map (kbd "C-c t") 'toggle-transparency)
+(global-set-key (kbd "C-c t") 'toggle-transparency)
 
 (add-to-list 'default-frame-alist '(fullscreen . maximized)) ;; Load full screen on startup
 (set-frame-parameter (selected-frame) 'alpha '(85 . 75)) ;; Load at 85% transparency on startup
@@ -87,6 +87,11 @@
 (global-set-key (kbd "M-n") (kbd "C-u 1 C-v"))
 (global-set-key (kbd "M-p") (kbd "C-u 1 M-v"))
 
+;; Efficient general  bindings
+(global-set-key (kbd "C-w") 'backward-kill-word)
+(global-set-key (kbd "C-x C-k") 'kill-region)
+(global-set-key (kbd "C-c C-k") 'kill-region)
+(global-set-key (kbd "C-x k") 'kill-current-buffer)
 (global-set-key (kbd "C-j") (lambda () (interactive) (join-line -1))) ;; Join line to next line
 
 ;; Buffer formatting
@@ -94,7 +99,6 @@
 (setq size-indication-mode t)
 (setq echo-keystrokes .1)
 
-(setq-default display-line-numbers 'relative)
 (setq-default whitespace-style '(face lines-tail) ;; Highlight lines past fill column
               truncate-lines nil                  ;; I never want to scroll horizontally
               indent-tabs-mode nil)               ;; Use spaces instead of tabs
@@ -161,6 +165,10 @@
 (use-package page-break-lines
   :hook ((emacs-lisp-mode text-mode) . page-break-lines-mode))
 
+(use-package expand-region
+  :bind
+  ("C-=" . er/expand-region))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Magit
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -176,7 +184,7 @@
   (:map projectile-mode-map
         ("C-c p" . projectile-command-map))
    :config
-   (projectile-mode +1)
+   (projectile-mode)
    (setq projectile-use-git-grep 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -197,6 +205,7 @@
          ("b" . helm-descbinds)
          ("d" . helm-apropos)
          :map helm-map
+         ("C-w" . backward-kill-word)
          ("TAB" . helm-execute-persistent-action)
          ("<tab>" . helm-execute-persistent-action)
          ("C-z" . helm-select-action)))
@@ -321,13 +330,64 @@
   (elpy-mode . (lambda () (unless pyvenv-virtual-env
                             (pyvenv-activate "venv")))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Javascript Configurations
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package xref-js2)
+
+(defun configure-xref-js2-jtd ()
+  "This replaces the js2-mode jtd with xref-js2 (using ag search) instead"
+  (define-key js-mode-map (kbd "M-.") nil)
+  (js2-imenu-extras-mode)
+  (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t))
+
+(use-package js2-mode
+  :requires xref-js2
+  :mode ("\\.js\\'" . js2-mode)
+  :hook (js2-mode . configure-xref-js2-jtd)
+  :config
+  (setq js2-basic-offset 2)
+  (setq js2-indent-level 2))
+
+;; Typescript configurations
+(defun setup-tide-mode ()
+  "Interactively initializes the tide"
+  (interactive)
+  (tide-setup)
+  (tide-hl-identifier-mode))
+
+(use-package tide
+  :after (typescript-mode company flycheck)
+  :hook ((typescript-mode . setup-tide-mode)
+         (before-save . tide-format-before-save))
+  :config
+  (setq company-tooltip-align-annotations t))    ;; aligns annotation to the right hand side
+
+;; React Configuration
+(defun current-file-is-react ()
+  "Returns t if the current source file is a react template otherwise nil"
+  (or (string-equal "tsx" (file-name-extension buffer-file-name))
+      (string-equal "jsx" (file-name-extension buffer-file-name))))
+
+(use-package web-mode
+  :mode (("\\.tsx\\'" . web-mode)
+         ("\\.jsx\\'" . web-mode)
+         ("\\.html\\'" . web-mode)
+         ("\\.css\\'" . web-mode))
+  :hook (web-mode . (lambda () (when (current-file-is-react)
+                                 (setup-tide-mode)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Initial window setup
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Start up files & windows after all packages are loaded & configured
-(split-window-right)
-(other-window 1)
-(find-file "~/.emacs.d/init.el")
-(other-window 1)
-(find-file "~/todo.org")
+
+(defun initialize-screen ()
+  " Sets up buffers & windows upon loading "
+  (split-window-right)
+  (other-window 1)
+  (find-file "~/.emacs.d/init.el")
+  (other-window 1)
+  (find-file "~/todo.org"))
+
+(initialize-screen)
