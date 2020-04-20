@@ -23,6 +23,7 @@
 
 ;; Installs missing packages via bootstrapping to the 'use-package' module
 (unless (package-installed-p 'use-package)
+  (package-refresh-contents)
   (package-install 'use-package))
 (require 'use-package)
 
@@ -64,9 +65,7 @@
 (global-hl-line-mode 1)
 (mouse-avoidance-mode 'animate)
 (fset 'yes-or-no-p 'y-or-n-p) ;; Shorten yes/no prompts
-
 (setq async-shell-command-display-buffer nil) ;; No pop-up after async command
-(global-undo-tree-mode) ;; Unable simple redo key + visual undo tree to checkout branches
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; General
@@ -168,6 +167,10 @@
 (use-package expand-region
   :bind
   ("C-=" . er/expand-region))
+
+(use-package undo-tree
+  :config
+  (global-undo-tree-mode)) ;; Unable simple redo key + visual undo tree to checkout branches
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Magit

@@ -12,4 +12,4 @@ Repository containing all my personal dotfile configurations.
 - General note taking & tracking TODOs/questions with Org-mode
 - Managing source version control through Magit
 - Designing documents through org-mode/Latex (via Auctex)
-- Development support for Python
+- Development support for Python & JS
