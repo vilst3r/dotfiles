@@ -382,6 +382,21 @@
                                  (setup-tide-mode)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Misc
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun epi-judge-execute ()
+  " Execute program against the EPI Judge test cases "
+  (interactive)
+  (cond ((string-equal "c++-mode" major-mode)
+         (shell-command (concat "make " (file-name-base))))
+        ((string-equal "python-mode" major-mode)
+         (shell-command (concat "python3 " buffer-file-name)))
+        (t (shell-command "echo \"File & major mode not supported for the EPI Judge\""))))
+
+(global-set-key (kbd "C-c e") 'epi-judge-execute)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Initial window setup
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

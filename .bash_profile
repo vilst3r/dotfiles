@@ -1,10 +1,11 @@
 # Extend .bashrc if exists
-if [ -f $HOME/.bashrc ]
+if [ -f $HOME/.bashrc ] 
 then
     source ~/.bashrc
 fi
 
 # Environment variables
+export TERM=xterm-256color
 export EDITOR=vim
 export CLICOLOR=1
 export LSCOLORS=ExfxcxdxBxgxexbxaxcxdx
@@ -15,6 +16,12 @@ export HISTTIMEFORMAT='%F %T ' # Timestamp each bash call
 
 # Use vim keybinds for bash input stream
 set -o vi
+
+# Prioritise homebrew binaries if underlying platform is OSX
+if [ "$(uname)" == "Darwin" ]; then
+    export PATH=/usr/local/bin:/usr/local/sbin:$PATH
+fi
+
 
 # Aliases
 alias python=python3
