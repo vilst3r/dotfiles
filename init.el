@@ -414,14 +414,52 @@ This still requires you to quit Acrobat Reader with S-q"
 (eval-after-load 'latex
   '(define-key LaTeX-mode-map (kbd "C-c r") 'latex-reload-pdf))
 
+(defun org-update-last-edit-timestamp ()
+  "Updates the date header in the todo document"
+  (interactive)
+  (when (and (string-equal major-mode "org-mode")
+             (string-equal (file-name-base) "todo"))
+    (save-excursion
+      (goto-char (point-min))
+      (setq org-date-pattern "#\\+DATE: \\(.*\\) (last updated)")
+      (setq current-timestamp (string-trim-right (shell-command-to-string "date")))
+      (if (re-search-forward org-date-pattern nil t 1)
+          (replace-match (format "#+DATE: %s (last updated)" current-timestamp))))))
+
+(add-hook 'before-save-hook 'org-update-last-edit-timestamp)
+
+(defun epi-judge-config ()
+  "Turn off syntax checking & auto-completion when working on EPIJudge"
+  (when (string-equal (projectile-project-name) "EPIJudge")
+    (company-mode 0)
+    (flymake-mode 0)
+    (flycheck-mode 0)))
+
+(add-hook 'elpy-mode-hook 'epi-judge-config)
+(add-hook 'c++-mode-hook 'epi-judge-config)
+
 (defun epi-judge-execute ()
   " Execute program against the EPI Judge test cases "
   (interactive)
-  (cond ((string-equal "c++-mode" major-mode)
-         (shell-command (format "make %S" (file-name-base))))
-        ((string-equal "python-mode" major-mode)
-         (shell-command (format "python3 %S" buffer-file-name)))
-        (t (shell-command "echo \"File & major mode not supported for the EPI Judge\""))))
+  (let ((output-buffer "*EPIJudge Output*")
+        (error-buffer "*EPIJudge Error*")
+        (command (cond ((string-equal "c++-mode" major-mode)
+                        (format "make %s" (file-name-base)))
+                       ((string-equal "python-mode" major-mode)
+                        (format "python3 %s.py" (file-name-base)))
+                       (t "echo \"File & major mode not supported for the EPI Judge\""))))
+    (when (get-buffer error-buffer)
+      (kill-buffer error-buffer))
+    (save-selected-window
+      (shell-command command output-buffer error-buffer)
+      (switch-to-buffer-other-window output-buffer)
+      (special-mode)                    ; Enable quick exits
+      (if (get-buffer error-buffer)
+          (progn
+            (switch-to-buffer error-buffer)
+            (special-mode)
+            (goto-char (point-min)))
+        (goto-char (point-max))))))
 
 (global-set-key (kbd "C-c e") 'epi-judge-execute)
 
@@ -437,8 +475,10 @@ This still requires you to quit Acrobat Reader with S-q"
   (customize-save-variable 'spotify-oauth2-client-id client-id)
   (customize-save-variable 'spotify-oauth2-client-secret client-secret))
 
-(when (and (featurep 'spotify) (eq spotify-oauth2-client-id "") (eq spotify-oauth2-client-secret "")
-           (call-interactively #'prompt-spotify-oauth-credentials)))
+(when (and (featurep 'spotify)
+           (eq spotify-oauth2-client-id "")
+           (eq spotify-oauth2-client-secret ""))
+  (call-interactively #'prompt-spotify-oauth-credentials))
 
 (use-package spotify
   :bind (:map spotify-mode-map
