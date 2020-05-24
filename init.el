@@ -55,10 +55,11 @@
     (set-frame-parameter (selected-frame) 'alpha default-frame-alpha)))
 
 (global-set-key (kbd "C-c t") 'toggle-transparency)
+(global-set-key (kbd "C-c f") 'toggle-frame-fullscreen)
 
 ;; Default frame parameters
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
-(add-to-list 'default-frame-alist `(alpha . ,transparent-frame-alpha))
+(add-to-list 'default-frame-alist `(alpha . ,default-frame-alpha))
 
 ;; Hide unused GUI features to gain more screen pixels
 (tool-bar-mode   -1)  ; Remove the large Word-like editing icons at the top
@@ -70,7 +71,7 @@
 (setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow)) ; Soft wrap lines
 
 (global-visual-line-mode 1)
-(global-hl-line-mode 1)
+(display-battery-mode 1)
 (mouse-avoidance-mode 'animate)
 (fset 'yes-or-no-p 'y-or-n-p)           ; Shorten yes/no prompts
 
@@ -261,7 +262,8 @@
   (setq org-ellipsis " ⤵")
   (setq org-return-follows-link t)  
   (setq org-catch-invisible-edits 'show)
-  (setq org-enforce-todo-dependencies t)  
+  (setq org-enforce-todo-dependencies t)
+  (add-to-list 'org-link-frame-setup  '(file . find-file)) ; Visit links in same window
   ;; Org Agenda Settings
   (setq org-agenda-files (list org-default-notes-file))
   (setq org-agenda-tags-column -10)
@@ -336,10 +338,13 @@
   :init
   (elpy-enable)
   :hook
-  (elpy-mode . py-autopep8-enable-on-save)
-  (elpy-mode . (lambda () (highlight-indentation-mode -1)))
-  (elpy-mode . (lambda () (unless pyvenv-virtual-env
-                            (pyvenv-activate "venv")))))
+  (elpy-mode . (lambda ()
+                 (highlight-indentation-mode -1)
+                 (when (and (null pyvenv-virtual-env) (file-directory-p "venv"))
+                   (pyvenv-activate "venv")))))
+
+(use-package py-autopep8
+  :hook (elpy-mode . py-autopep8-enable-on-save))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     Javascript Configurations                                  ;;
@@ -435,7 +440,6 @@ This still requires you to quit Acrobat Reader with S-q"
     (flymake-mode 0)
     (flycheck-mode 0)))
 
-(add-hook 'elpy-mode-hook 'epi-judge-config)
 (add-hook 'c++-mode-hook 'epi-judge-config)
 
 (defun epi-judge-execute ()
@@ -445,8 +449,6 @@ This still requires you to quit Acrobat Reader with S-q"
         (error-buffer "*EPIJudge Error*")
         (command (cond ((string-equal "c++-mode" major-mode)
                         (format "make %s" (file-name-base)))
-                       ((string-equal "python-mode" major-mode)
-                        (format "python3 %s.py" (file-name-base)))
                        (t "echo \"File & major mode not supported for the EPI Judge\""))))
     (when (get-buffer error-buffer)
       (kill-buffer error-buffer))
@@ -484,8 +486,7 @@ This still requires you to quit Acrobat Reader with S-q"
   :bind (:map spotify-mode-map
               ("C-c ." . spotify-command-map))
   :config
-  (setq spotify-helm-integration 1)
-  (global-spotify-remote-mode 1))
+  (setq spotify-helm-integration 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                        Initial window setup                                    ;;
