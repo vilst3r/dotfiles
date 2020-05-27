@@ -174,7 +174,9 @@
 
 (use-package undo-tree
   :config
-  (global-undo-tree-mode))              ; Enable simple redo key & undo tree graph
+  (setq undo-tree-visualizer-timestamps t) ; Each node in the undo tree should have a timestamp
+  (setq undo-tree-visualizer-diff t)       ; Show diff window displaying changes between undo nodes
+  (global-undo-tree-mode))                 ; Enable simple redo key & undo tree graph
 
 (use-package flycheck
   :init (global-flycheck-mode)
@@ -432,38 +434,6 @@ This still requires you to quit Acrobat Reader with S-q"
           (replace-match (format "#+DATE: %s (last updated)" current-timestamp))))))
 
 (add-hook 'before-save-hook 'org-update-last-edit-timestamp)
-
-(defun epi-judge-config ()
-  "Turn off syntax checking & auto-completion when working on EPIJudge"
-  (when (string-equal (projectile-project-name) "EPIJudge")
-    (company-mode 0)
-    (flymake-mode 0)
-    (flycheck-mode 0)))
-
-(add-hook 'c++-mode-hook 'epi-judge-config)
-
-(defun epi-judge-execute ()
-  " Execute program against the EPI Judge test cases "
-  (interactive)
-  (let ((output-buffer "*EPIJudge Output*")
-        (error-buffer "*EPIJudge Error*")
-        (command (cond ((string-equal "c++-mode" major-mode)
-                        (format "make %s" (file-name-base)))
-                       (t "echo \"File & major mode not supported for the EPI Judge\""))))
-    (when (get-buffer error-buffer)
-      (kill-buffer error-buffer))
-    (save-selected-window
-      (shell-command command output-buffer error-buffer)
-      (switch-to-buffer-other-window output-buffer)
-      (special-mode)                    ; Enable quick exits
-      (if (get-buffer error-buffer)
-          (progn
-            (switch-to-buffer error-buffer)
-            (special-mode)
-            (goto-char (point-min)))
-        (goto-char (point-max))))))
-
-(global-set-key (kbd "C-c e") 'epi-judge-execute)
 
 ;; Private/Local Packages
 (eval-when-compile

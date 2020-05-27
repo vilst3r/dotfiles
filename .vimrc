@@ -12,6 +12,8 @@ call plug#begin('~/.vim/plugged')
 Plug 'morhetz/gruvbox'
 Plug 'ludovicchabant/vim-gutentags'
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'octol/vim-cpp-enhanced-highlight'
+Plug 'jiangmiao/auto-pairs'
 call plug#end()
 
 " Automatic installation of missing plugins
@@ -27,7 +29,6 @@ autocmd VimEnter *
 set number
 set relativenumber
 set showcmd
-set cursorline
 set ruler " Show line & column no. seperated by a comma
 set vb t_vb= " Disable visual & audio bell
 set backspace=indent,eol,start " Allow backspace modification for the following
@@ -49,13 +50,11 @@ set smartcase
 syntax enable
 set background=dark
 silent! colorscheme gruvbox
-" Better visual cursor line for iTerm
-hi cursorline cterm=underline ctermbg=black
 
 " General Keymappings
-let mapleader="," " For event based mappings below
 " Get buffer x (number or substring candidate)
 nnoremap <C-x>b :ls<CR>:b<Space>
+let mapleader=","
 " Move vertically within a single line that's soft wrapped
 nnoremap j gj
 nnoremap k gk
@@ -86,13 +85,11 @@ augroup main
     autocmd!
     autocmd FileType help noremap <buffer> q :q<CR>
 
-    " Build cpp buffer
-    autocmd filetype cpp nnoremap <leader>c :w <bar>
-                                    \!g++ -std=c++14 -O2 -Wall % -o %:r<CR>
-    " Executes compiled file of cpp buffer if it exists
-    autocmd filetype cpp nnoremap <leader>r :w <bar> :!./%:r<CR>
-    autocmd filetype cpp nnoremap <leader>m :w <bar> :!make<CR>
-    autocmd filetype python nnoremap <leader>r :w <bar> !python3 %<CR>
+    autocmd filetype cpp nnoremap <leader>c :w <bar> :!clear &&
+                                    \g++ -std=c++14 -O2 -Wall % -o %:r<CR>
+    autocmd filetype cpp nnoremap <leader>r :w <bar> :!clear && ./%:r<CR>
+    autocmd filetype cpp nnoremap <leader>m :w <bar> :!clear && make<CR>
+    autocmd filetype python nnoremap <leader>r :w <bar> !clear && python3 %<CR>
 augroup end
 
 " Tags
@@ -128,7 +125,6 @@ let @l='0v$h"+y' "Save entire line to system clipboard
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Powerline
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Powerline
 let g:repository_root = trim(system('python3 -m site --user-site'))
 execute 'set rtp+=' . g:repository_root . '/powerline/bindings/vim'
 set laststatus=2
