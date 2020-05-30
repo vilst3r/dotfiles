@@ -118,7 +118,7 @@
 (add-hook 'before-save-hook 'whitespace-cleanup)
 (add-hook 'prog-mode-hook (lambda () (setup-autofill 80 t)))
 (add-hook 'text-mode-hook (lambda () (setup-autofill 80 nil)))
-(add-hook 'emacs-lisp-mode-hook (lambda () (setup-autofill 100 t) (flyspell-prog-mode)))
+(add-hook 'emacs-lisp-mode-hook (lambda () (setup-autofill 100 t)))
 (add-hook 'markdown-mode-hook (lambda () (setup-autofill 80 t)))
 (add-hook 'LaTeX-mode-hook (lambda () (setup-autofill 80 t)))
 
@@ -126,7 +126,9 @@
 (use-package all-the-icons)
 (use-package doom-modeline
   :ensure t
-  :init (doom-modeline-mode 1))
+  :config
+  (setq doom-modeline-modal-icon nil)
+  (doom-modeline-mode 1))
 (use-package doom-themes
   :config
   (load-theme 'doom-city-lights t)
@@ -158,11 +160,17 @@
 (use-package ace-window
   :bind ("M-o" . ace-window))
 
-;; Set autocomplete across all modes
+;; Auto-completion
 (use-package company
   :hook (after-init . global-company-mode)
+  :bind (:map company-active-map
+         ("C-p" . company-select-previous)
+         ("C-n" . company-select-next)
+         ("<tab>" . company-complete-selection)
+         ("TAB" . company-complete-selection))
   :config
-  (setq company-selection-wrap-around t))
+  (setq company-selection-wrap-around t)
+  (setq company-idle-delay 0.5))
 
 (use-package page-break-lines
   :init
@@ -333,6 +341,21 @@
 (use-package ox-twbs)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                           Evil Mode                                            ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package evil                       ; ',' -> leader key
+  :init
+  (setq evil-want-C-u-scroll t)         ; Override undo-tree with C-U when using evil mode
+  :config
+  (setq evil-insert-state-cursor nil    ; Default caret for insert & operator mode
+        evil-operator-state-cursor nil)
+  (define-key evil-normal-state-map ",ms" 'sync-make-current-file)
+  (define-key evil-normal-state-map ",ma" 'async-make-current-file)
+  (setq evil-complete-next-func 'company-select-next ; Use company over dabbrev for autocompletion
+        evil-complete-previous-func 'company-select-previous))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                       Python Configurations                                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -434,6 +457,57 @@ This still requires you to quit Acrobat Reader with S-q"
           (replace-match (format "#+DATE: %s (last updated)" current-timestamp))))))
 
 (add-hook 'before-save-hook 'org-update-last-edit-timestamp)
+
+(defun toggle-evil ()
+  "Toggles evil mode with relative line numbering locally"
+  (interactive)
+  (if evil-local-mode
+      (progn
+        (turn-off-evil-mode)
+        (setq-local display-line-numbers nil))
+    (progn
+      (turn-on-evil-mode)
+      (setq-local display-line-numbers 'relative))))
+
+(define-key prog-mode-map (kbd "C-c v") 'toggle-evil)
+
+(defun practice-config ()
+  "Turn off syntax checking & auto-completion for practice purposes"
+  (when (or (string-equal (projectile-project-name) "EPIJudge")
+            (string-equal (file-name-base (buffer-file-name)) "codeforces"))
+    (toggle-evil)
+    (company-mode 0)
+    (flymake-mode 0)
+    (flycheck-mode 0)))
+
+(add-hook 'c++-mode-hook 'practice-config)
+
+(defun sync-make-current-file ()
+  "Execute Makefile on current file synchronously"
+  (interactive)
+  (let ((command (format "make %s" (file-name-base))))
+    (save-window-excursion
+      (shell-command command)
+      (with-current-buffer "*Shell Command Output*" (help-mode)))
+    (switch-to-buffer "*Shell Command Output*")
+    (goto-char (point-max))))
+
+(defun async-make-current-file ()
+  "Execute Makefile on current file synchronously"
+  (interactive)
+  (let ((command (format "make %s" (file-name-base))))
+    (async-shell-command command)
+    (switch-to-buffer "*Async Shell Command*")
+    (if (process-live-p (get-buffer-process (current-buffer)))
+        (set-process-sentinel (get-buffer-process (current-buffer))
+                              (lambda (process signal)
+                                (when (memq (process-status process) '(exit signal))
+                                  (help-mode)
+                                  (shell-command-sentinel process signal))))
+      (message "No async process running"))))
+
+(define-key c++-mode-map (kbd "C-c m a") 'async-make-current-file)
+(define-key c++-mode-map (kbd "C-c m s") 'sync-make-current-file)
 
 ;; Private/Local Packages
 (eval-when-compile
