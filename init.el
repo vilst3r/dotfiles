@@ -94,6 +94,7 @@
 (global-set-key (kbd "C-x C-k") 'kill-region)
 (global-set-key (kbd "C-c C-k") 'kill-region)
 (global-set-key (kbd "C-x k") 'kill-current-buffer)
+(global-set-key (kbd "s-/") 'comment-dwim)
 (global-set-key (kbd "C-j") (lambda () (interactive) (join-line -1))) ; Vim's join line
 
 ;; Buffer formatting
@@ -169,8 +170,7 @@
          ("<tab>" . company-complete-selection)
          ("TAB" . company-complete-selection))
   :config
-  (setq company-selection-wrap-around t)
-  (setq company-idle-delay 0.5))
+  (setq company-selection-wrap-around t))
 
 (use-package page-break-lines
   :init
@@ -237,6 +237,10 @@
 (use-package helm-projectile
   :config
   (helm-projectile-on))
+
+;; Helm Ag for file search
+(use-package helm-ag
+  :bind ("C-c s" . helm-ag))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                            Latex Setup                                         ;;
@@ -366,7 +370,9 @@
   (elpy-mode . (lambda ()
                  (highlight-indentation-mode -1)
                  (when (and (null pyvenv-virtual-env) (file-directory-p "venv"))
-                   (pyvenv-activate "venv")))))
+                   (pyvenv-activate "venv"))))
+  :config
+  (setq elpy-rpc-python-command "python3"))
 
 (use-package py-autopep8
   :hook (elpy-mode . py-autopep8-enable-on-save))
@@ -509,11 +515,25 @@ This still requires you to quit Acrobat Reader with S-q"
 (define-key c++-mode-map (kbd "C-c m a") 'async-make-current-file)
 (define-key c++-mode-map (kbd "C-c m s") 'sync-make-current-file)
 
+;; iTerm compatible-config (Note - Evil Mode doesn't work in terminal emacs)
+(unless (display-graphic-p)
+  (beacon-mode 0)
+  (global-set-key (kbd "C-[ [ =") 'er/expand-region)
+  (global-set-key (kbd "C-[ [ ?") 'undo-tree-redo)
+  (org-defkey org-mode-map (kbd "C-[ [ ]") 'org-insert-heading-respect-content)
+  (org-defkey org-mode-map (kbd "C-[ [ s ]") 'org-insert-todo-heading-respect-content)
+  (org-defkey org-mode-map (kbd "C-[ [ 1 1") 'org-metaleft)
+  (org-defkey org-mode-map (kbd "C-[ [ 1 2") 'org-metaup)
+  (org-defkey org-mode-map (kbd "C-[ [ 1 3") 'org-metadown)
+  (org-defkey org-mode-map (kbd "C-[ [ 1 4") 'org-metaright))
+
 ;; Private/Local Packages
+(setq spotify-path "~/.emacs.d/private-packages/spotify.el")
+
 (eval-when-compile
-  (setq spotify-path "~/.emacs.d/private-packages/spotify.el")
-  (add-to-list 'load-path spotify-path)
-  (require 'spotify))
+  (when (file-exists-p spotify-path)
+    (add-to-list 'load-path spotify-path)
+    (require 'spotify)))
 
 (defun prompt-spotify-oauth-credentials (client-id client-secret)
   "Setup the user's Spotify to use within emacs. Depends on `spotify.el'"
