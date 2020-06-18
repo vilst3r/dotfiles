@@ -1,5 +1,5 @@
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Optional - Plugin Management (configurations are near the EOF)
+" => Plugin Management
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Automatic installation with autoload directory
 if empty(glob('~/.vim/autoload/plug.vim'))
@@ -10,8 +10,6 @@ endif
 
 call plug#begin('~/.vim/plugged')
 Plug 'morhetz/gruvbox'
-Plug 'ludovicchabant/vim-gutentags'
-Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'octol/vim-cpp-enhanced-highlight'
 Plug 'jiangmiao/auto-pairs'
 call plug#end()
@@ -39,43 +37,27 @@ set textwidth=80
 set wrap
 
 " Searching
-set path+=** " Recursive search from current directory
 set wildmenu " Show all matching files when we tab complete
 set incsearch "Incremental search
 set hlsearch
 set ignorecase "Ignore case when searching
 set smartcase
 
+" Turn backup files off
+set nobackup
+set nowb
+set noswapfile
+
 " GUI
-syntax enable
+syntax on
 set background=dark
 silent! colorscheme gruvbox
 
 " General Keymappings
-" Get buffer x (number or substring candidate)
-nnoremap <C-x>b :ls<CR>:b<Space>
 let mapleader=","
 " Move vertically within a single line that's soft wrapped
 nnoremap j gj
 nnoremap k gk
-" Use Emacs bindings for command line mode
-cmap <C-p> <Up>
-cmap <C-n> <Down>
-cmap <C-b> <Left>
-cmap <C-f> <Right>
-cmap <C-a> <Home>
-cmap <C-e> <End>
-cnoremap <C-d> <Del>
-cnoremap <C-h> <BS>
-cnoremap <C-g> <C-c>
-function s:killLine()
-    if getcmdpos() == 1
-        return ''
-    else
-        return getcmdline()[:getcmdpos() - 2]
-    endif
-endfunction
-cnoremap <C-k> <C-\>e <SID>killLine()<CR>
 " Turn off search highlighting & clear query at bottom of window
 nnoremap <silent> <Space> :nohlsearch<Bar>:echo<CR>
 
@@ -85,25 +67,12 @@ augroup main
     autocmd!
     autocmd FileType help noremap <buffer> q :q<CR>
 
-    autocmd filetype cpp nnoremap <leader>c :w <bar> :!clear &&
-                                    \g++ -std=c++14 -O2 -Wall % -o %:r<CR>
+    autocmd filetype cpp nnoremap <leader>b :w <bar> :!clear &&
+                                    \g++ -std=c++17 -O2 -Wall % -o %:r<CR>
     autocmd filetype cpp nnoremap <leader>r :w <bar> :!clear && ./%:r<CR>
     autocmd filetype cpp nnoremap <leader>m :w <bar> :!clear && make<CR>
     autocmd filetype python nnoremap <leader>r :w <bar> !clear && python3 %<CR>
 augroup end
-
-" Tags
-set tags=./tags;,tags;
-nnoremap <C-]> g<C-]>
-let g:gutentags_cache_dir = expand('~/.cache/vim/ctags/')
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => Files, backups and undo
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Turn backup off, since most stuff is in SVN, git anyway...
-set nobackup
-set nowb
-set noswapfile
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Text, tab and indent related
@@ -114,7 +83,6 @@ set shiftwidth=4  " Indenting '>', use 4 spaces of the column width
 set softtabstop=4 " Number of columns for a TAB
 set expandtab     " Convert tabs to spaces
 autocmd fileType cpp setlocal shiftwidth=2 softtabstop=2
-autocmd fileType javascript setlocal shiftwidth=2 softtabstop=2
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => General macros
@@ -129,75 +97,3 @@ let g:repository_root = trim(system('python3 -m site --user-site'))
 execute 'set rtp+=' . g:repository_root . '/powerline/bindings/vim'
 set laststatus=2
 set t_Co=256
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => FZF (plugin config)
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Add kill-line to fzh windows
-let $FZF_DEFAULT_OPTS='--bind ctrl-k:kill-line'
-
-command GitProjectFiles call fzf#run({
-\  'source': 'git ls-files',
-\  'sink':   'e',
-\  'down':   '30%'})
-
-function! s:bufferList()
-  redir => ls
-  silent ls
-  redir END
-  return split(ls, '\n')
-endfunction
-
-function! s:bufferOpen(e)
-  execute 'buffer' matchstr(a:e, '^[ 0-9]*')
-endfunction
-
-function! s:ag_to_qf(line)
-  let parts = split(a:line, ':')
-  return {'filename': parts[0], 'lnum': parts[1], 'col': parts[2],
-        \ 'text': join(parts[3:], ':')}
-endfunction
-
-function! s:ag_handler(lines)
-  if len(a:lines) < 2 | return | endif
-
-  let cmd = get({'ctrl-x': 'split',
-               \ 'ctrl-v': 'vertical split',
-               \ 'ctrl-t': 'tabe'}, a:lines[0], 'e')
-  let list = map(a:lines[1:], 's:ag_to_qf(v:val)')
-
-  let first = list[0]
-  execute cmd escape(first.filename, ' %#\')
-  execute first.lnum
-  execute 'normal!' first.col.'|zz'
-
-  if len(list) > 1
-    call setqflist(list)
-    copen
-    wincmd p
-  endif
-endfunction
-
-command! -nargs=* Ag call fzf#run({
-\ 'source':  printf('ag --nogroup --column --color "%s"',
-\                   escape(empty(<q-args>) ? '^(?=.)' : <q-args>, '"\')),
-\ 'sink*':    function('<sid>ag_handler'),
-\ 'options': '--ansi --expect=ctrl-t,ctrl-v,ctrl-x --delimiter : --nth 4.. '.
-\            '--multi --bind=ctrl-a:select-all,ctrl-d:deselect-all '.
-\            '--color hl:68,hl+:110',
-\ 'down':    '50%'
-\ })
-
-command AutoCompleteBufferList call fzf#run({
-\   'source':  reverse(<sid>bufferList()),
-\   'sink':    function('<SID>bufferOpen'),
-\   'options': '+m',
-\   'down':    len(<sid>bufferList()) + 2
-\ })
-
-nnoremap <silent> <C-c>pf :GitProjectFiles<CR>
-nnoremap <silent> <C-x>b :AutoCompleteBufferList<CR>
-nnoremap <silent> <C-x>k :bd<CR>
-nnoremap <silent> <C-c>ps :Ag<CR>
-
-

@@ -66,12 +66,16 @@
 (scroll-bar-mode -1)  ; Remove visual scroll bar & rely on modeline buffer percentage
 (menu-bar-mode   -1)  ; Remove the large Mac OS top pane menu options
 
+(setq display-time-day-and-date t)
+(setq display-time-24hr-format t)
+(setq display-time-default-load-average nil)
 (setq inhibit-startup-message t)
 (setq async-shell-command-display-buffer nil)                              ; No async pop-ups
 (setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow)) ; Soft wrap lines
 
 (global-visual-line-mode 1)
 (display-battery-mode 1)
+(display-time-mode 1)
 (mouse-avoidance-mode 'animate)
 (fset 'yes-or-no-p 'y-or-n-p)           ; Shorten yes/no prompts
 
@@ -112,7 +116,7 @@
   (setq fill-column value)
   (auto-fill-mode 1)
   (when toggle-whitespace-mode          ; Reset whitespace value if it exists
-    (whitespace-mode 0)    
+    (whitespace-mode 0)
     (setq whitespace-line-column value)
     (whitespace-mode 1)))
 
@@ -165,10 +169,10 @@
 (use-package company
   :hook (after-init . global-company-mode)
   :bind (:map company-active-map
-         ("C-p" . company-select-previous)
-         ("C-n" . company-select-next)
-         ("<tab>" . company-complete-selection)
-         ("TAB" . company-complete-selection))
+              ("C-p" . company-select-previous)
+              ("C-n" . company-select-next)
+              ("<tab>" . company-complete-selection)
+              ("TAB" . company-complete-selection))
   :config
   (setq company-selection-wrap-around t))
 
@@ -177,8 +181,7 @@
   (global-page-break-lines-mode 1))
 
 (use-package expand-region
-  :bind
-  ("C-=" . er/expand-region))
+  :bind ("C-=" . er/expand-region))
 
 (use-package undo-tree
   :config
@@ -189,7 +192,14 @@
 (use-package flycheck
   :init (global-flycheck-mode)
   :config
-  (setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc)))
+  (setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc))
+  (add-hook 'c++-mode-hook
+            (lambda () (setq flycheck-clang-language-standard "c++17"))))
+
+(use-package yasnippet-snippets
+  :config
+  (yas-reload-all)
+  (setq yas-triggers-in-field t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                               Magit                                            ;;
@@ -206,32 +216,41 @@
   :bind
   (:map projectile-mode-map
         ("C-c p" . projectile-command-map))
-   :config
-   (setq projectile-use-git-grep 1)
-   (projectile-mode))
+  :config
+  (setq projectile-use-git-grep 1)
+  (projectile-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                                Helm                                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
 (use-package helm-descbinds)
 (use-package helm
   :init (helm-mode t)
-  :bind (("C-c i" . helm-imenu)
+  :bind (("C-x m" . helm-M-x)
+         ("C-x b" . helm-mini)
+         ("C-x C-f" . helm-find-files)
+         ("C-x r b" . helm-filtered-bookmarks)
+         ("C-h b" . helm-descbinds)
+         ("C-h d" . helm-apropos)
+         ("C-c i" . helm-imenu)
          ("M-y" . helm-show-kill-ring)
-         :map ctl-x-map
-         ("m" . helm-M-x)
-         ("b" . helm-mini)
-         ("C-f" . helm-find-files)
-         ("r b" . helm-filtered-bookmarks)
-         :map help-map
-         ("b" . helm-descbinds)
-         ("d" . helm-apropos)
          :map helm-map
          ("C-w" . backward-kill-word)
          ("TAB" . helm-execute-persistent-action)
          ("<tab>" . helm-execute-persistent-action)
          ("C-z" . helm-select-action)))
+
+(use-package helm-swoop
+  :bind ("M-s" . helm-swoop)
+  :config
+  (setq helm-swoop-split-direction 'split-window-horizontally)
+  (setq helm-swoop-pre-input-function
+        (lambda ()                      ; Use marked region as query if selected
+          (if mark-active
+              (buffer-substring-no-properties (mark) (point))
+            ""))))
 
 ;; Helm for projectile search
 (use-package helm-projectile
@@ -256,7 +275,7 @@
   (setq TeX-auto-save t)
   (setq TeX-parse-self t)
   (setq TeX-PDF-mode t)                 ; Enable default compilation to PDF
-  (setq ispell-dictionary "english")    ; Default Dictionary for TeX         
+  (setq ispell-dictionary "english")    ; Default Dictionary for TeX
   (setq LaTeX-babel-hyphen nil))        ; Disable language-specific hyphen insertion
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -265,6 +284,8 @@
 
 (use-package org
   :ensure org-plus-contrib
+  :hook
+  (org-mode . flyspell-mode)
   :bind (("C-c c" . org-capture)
          ("C-c a" . org-agenda))
   :config
@@ -274,7 +295,7 @@
                              "TODO(t)" "IN-PROGRESS(i)" "WAITING(w)" "REDO(r)" "EXAMINE-SOLUTION(e)"
                              "|" "DONE(d)" "UNRESOLVED(u)" "SKIPPED(s)")))
   (setq org-ellipsis " ⤵")
-  (setq org-return-follows-link t)  
+  (setq org-return-follows-link t)
   (setq org-catch-invisible-edits 'show)
   (setq org-enforce-todo-dependencies t)
   (add-to-list 'org-link-frame-setup  '(file . find-file)) ; Visit links in same window
@@ -338,7 +359,7 @@
         '((?A :foreground "red" :weight bold)
           (?B . "orange")
           (?C . "yellow")
-          (?D . "green")))  
+          (?D . "green")))
   (setq org-fancy-priorities-list '("HIGH" "MID" "LOW" "OPTIONAL")))
 
 ;; Export a Twitter Bootstrap HTML format of org file
@@ -351,9 +372,11 @@
 (use-package evil                       ; ',' -> leader key
   :init
   (setq evil-want-C-u-scroll t)         ; Override undo-tree with C-U when using evil mode
+  (setq evil-want-C-u-delete t)
   :config
   (setq evil-insert-state-cursor nil    ; Default caret for insert & operator mode
-        evil-operator-state-cursor nil)
+        evil-operator-state-cursor nil
+        evil-replace-state-cursor nil)
   (define-key evil-normal-state-map ",ms" 'sync-make-current-file)
   (define-key evil-normal-state-map ",ma" 'async-make-current-file)
   (setq evil-complete-next-func 'company-select-next ; Use company over dabbrev for autocompletion
@@ -470,28 +493,35 @@ This still requires you to quit Acrobat Reader with S-q"
   (if evil-local-mode
       (progn
         (turn-off-evil-mode)
-        (setq-local display-line-numbers nil))
+        (setq-local display-line-numbers nil)
+        (yas-minor-mode 1))
     (progn
       (turn-on-evil-mode)
-      (setq-local display-line-numbers 'relative))))
+      (setq-local display-line-numbers 'relative)
+      (yas-minor-mode -1))))
 
 (define-key prog-mode-map (kbd "C-c v") 'toggle-evil)
 
 (defun practice-config ()
   "Turn off syntax checking & auto-completion for practice purposes"
   (when (or (string-equal (projectile-project-name) "EPIJudge")
-            (string-equal (file-name-base (buffer-file-name)) "codeforces"))
+            (string-equal (file-name-base (buffer-file-name)) "codeforces")
+            (string-equal (file-name-base (buffer-file-name)) "leetcode"))
     (toggle-evil)
     (company-mode 0)
     (flymake-mode 0)
     (flycheck-mode 0)))
 
 (add-hook 'c++-mode-hook 'practice-config)
+(add-hook 'elpy-mode-hook 'practice-config)
 
 (defun sync-make-current-file ()
   "Execute Makefile on current file synchronously"
   (interactive)
-  (let ((command (format "make %s" (file-name-base))))
+  (let ((command (cond ((string-equal major-mode "c++-mode")
+                        (format "make %s" (file-name-base)))
+                       ((string-equal major-mode "python-mode")
+                        (format "python3 %s.py" (file-name-base))))))
     (save-window-excursion
       (shell-command command)
       (with-current-buffer "*Shell Command Output*" (help-mode)))
@@ -501,7 +531,10 @@ This still requires you to quit Acrobat Reader with S-q"
 (defun async-make-current-file ()
   "Execute Makefile on current file synchronously"
   (interactive)
-  (let ((command (format "make %s" (file-name-base))))
+  (let ((command (cond ((string-equal major-mode "c++-mode")
+                        (format "make %s" (file-name-base)))
+                       ((string-equal major-mode "python-mode")
+                        (format "python3 %s.py" (file-name-base))))))
     (async-shell-command command)
     (switch-to-buffer "*Async Shell Command*")
     (if (process-live-p (get-buffer-process (current-buffer)))
@@ -514,6 +547,16 @@ This still requires you to quit Acrobat Reader with S-q"
 
 (define-key c++-mode-map (kbd "C-c m a") 'async-make-current-file)
 (define-key c++-mode-map (kbd "C-c m s") 'sync-make-current-file)
+(define-key python-mode-map (kbd "C-c m a") 'async-make-current-file)
+(define-key python-mode-map (kbd "C-c m s") 'sync-make-current-file)
+
+(defun cpp-auto-format ()
+  "Format cpp buffer on each save, formatting lines of code"
+  (interactive)
+  (when (string-equal major-mode "c++-mode")
+    (c-indent-region (point-min) (point-max))))
+
+(add-hook 'before-save-hook 'cpp-auto-format)
 
 ;; iTerm compatible-config (Note - Evil Mode doesn't work in terminal emacs)
 (unless (display-graphic-p)
