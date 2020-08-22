@@ -286,6 +286,9 @@
   :ensure org-plus-contrib
   :hook
   (org-mode . flyspell-mode)
+  (org-mode . org-document-imenu-depth)
+  (org-mode . (lambda () (company-mode -1)))
+  (org-src-mode . org-toggle-src-content-indentation)
   :bind (("C-c c" . org-capture)
          ("C-c a" . org-agenda))
   :config
@@ -298,7 +301,7 @@
   (setq org-return-follows-link t)
   (setq org-catch-invisible-edits 'show)
   (setq org-enforce-todo-dependencies t)
-  (add-to-list 'org-link-frame-setup  '(file . find-file)) ; Visit links in same window
+  (add-to-list 'org-link-frame-setup  '(file . find-file)) ; visit links in same window
   ;; Org Agenda Settings
   (setq org-agenda-files (list org-default-notes-file))
   (setq org-agenda-tags-column -10)
@@ -332,6 +335,9 @@
   ;; Org src block code settings
   (setq org-src-tab-acts-natively t)    ; Native indentation settings of language in src block
   (setq org-confirm-babel-evaluate nil) ; No confirmation upon execution
+  (setq org-babel-C++-compiler
+        "g++ -std=c++17 -pthread -Werror -Wno-unused-variable -Wno-sign-compare -Wuninitialized")
+  (setq org-babel-python-command "python3")
   (org-babel-do-load-languages          ; Languages supported for execution
    'org-babel-load-languages '((emacs-lisp . t)
                                (clojure    . t)
@@ -377,28 +383,47 @@
   (setq evil-insert-state-cursor nil    ; Default caret for insert & operator mode
         evil-operator-state-cursor nil
         evil-replace-state-cursor nil)
-  (define-key evil-normal-state-map ",ms" 'sync-make-current-file)
-  (define-key evil-normal-state-map ",ma" 'async-make-current-file)
+  (evil-set-leader 'normal (kbd ","))
+  (evil-define-key 'normal 'global (kbd "<leader>ms") 'sync-make-current-file)
+  (evil-define-key 'normal 'global (kbd "<leader>ma") 'async-make-current-file)
   (setq evil-complete-next-func 'company-select-next ; Use company over dabbrev for autocompletion
         evil-complete-previous-func 'company-select-previous))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                       Python Configurations                                    ;;
+;;                                     Development Configurations                                 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package elpy
-  :init
-  (elpy-enable)
-  :hook
-  (elpy-mode . (lambda ()
-                 (highlight-indentation-mode -1)
-                 (when (and (null pyvenv-virtual-env) (file-directory-p "venv"))
-                   (pyvenv-activate "venv"))))
+(use-package lsp-mode
+  :commands lsp
+  :hook ((c-mode . lsp)
+         (c-or-c++-mode . lsp)
+         (python-mode . lsp)
+         (lsp-mode . lsp-enable-which-key-integration))
   :config
-  (setq elpy-rpc-python-command "python3"))
+  (setq lsp-keymap-prefix "s-l")
+  (setq lsp-auto-guess-root t)
+  (setq lsp-enable-symbol-highlighting nil))
+
+(use-package lsp-ui
+  :commands lsp-ui-mode)
+
+(use-package helm-lsp
+  :bind ([remap xref-find-apropos] . helm-lsp-workspace-symbol)
+  :commands helm-lsp-workspace-symbol)
+
+(use-package company-lsp
+  :commands company-lsp
+  :config
+  (setq company-lsp-cache-candidates 'auto)
+  (push 'company-lsp company-backends))
+
+(use-package lsp-pyright
+  :ensure t
+  :hook (python-mode . (lambda () (require 'lsp-pyright) (lsp)))) ; or lsp-deferred
 
 (use-package py-autopep8
-  :hook (elpy-mode . py-autopep8-enable-on-save))
+  :hook
+  (python-mode . py-autopep8-enable-on-save))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     Javascript Configurations                                  ;;
@@ -473,11 +498,26 @@ This still requires you to quit Acrobat Reader with S-q"
 (eval-after-load 'latex
   '(define-key LaTeX-mode-map (kbd "C-c r") 'latex-reload-pdf))
 
+(defun org-toggle-src-content-indentation ()
+  "Toggle indentation settings between editing & exporting code blocks"
+  (interactive)
+  (setq org-src-preserve-indentation nil)
+  (setq org-edit-src-content-indentation 0))
+
+(defun org-document-imenu-depth ()
+  "Set imenu depth for helm to use for specific org mode documents"
+  (interactive)
+  (unless (string-equal major-mode "org-mode") nil)
+  (cond ((and (buffer-file-name)
+              (string-equal (file-name-base) "cpp_reference_list"))
+         (setq org-imenu-depth 3))
+        (t
+         (setq org-imenu-depth 2))))
+
 (defun org-update-last-edit-timestamp ()
   "Updates the date header in the todo document"
   (interactive)
-  (when (and (string-equal major-mode "org-mode")
-             (string-equal (file-name-base) "todo"))
+  (when (string-equal major-mode "org-mode")
     (save-excursion
       (goto-char (point-min))
       (setq org-date-pattern "#\\+DATE: \\(.*\\) (last updated)")
@@ -498,22 +538,26 @@ This still requires you to quit Acrobat Reader with S-q"
     (progn
       (turn-on-evil-mode)
       (setq-local display-line-numbers 'relative)
-      (yas-minor-mode -1))))
+      (yas-minor-mode 1))))
 
 (define-key prog-mode-map (kbd "C-c v") 'toggle-evil)
 
 (defun practice-config ()
   "Turn off syntax checking & auto-completion for practice purposes"
   (when (or (string-equal (projectile-project-name) "EPIJudge")
-            (string-equal (file-name-base (buffer-file-name)) "codeforces")
-            (string-equal (file-name-base (buffer-file-name)) "leetcode"))
+            (and (buffer-file-name)
+                 (string-equal (file-name-base (buffer-file-name)) "codeforces"))
+            (and(buffer-file-name)
+                (string-equal (file-name-base (buffer-file-name)) "leetcode"))
+            (and(buffer-file-name)
+                (string-equal (file-name-base (buffer-file-name)) "atcoder")))
     (toggle-evil)
     (company-mode 0)
     (flymake-mode 0)
     (flycheck-mode 0)))
 
 (add-hook 'c++-mode-hook 'practice-config)
-(add-hook 'elpy-mode-hook 'practice-config)
+(add-hook 'python-mode-hook 'practice-config)
 
 (defun sync-make-current-file ()
   "Execute Makefile on current file synchronously"
@@ -545,16 +589,23 @@ This still requires you to quit Acrobat Reader with S-q"
                                   (shell-command-sentinel process signal))))
       (message "No async process running"))))
 
-(define-key c++-mode-map (kbd "C-c m a") 'async-make-current-file)
-(define-key c++-mode-map (kbd "C-c m s") 'sync-make-current-file)
-(define-key python-mode-map (kbd "C-c m a") 'async-make-current-file)
-(define-key python-mode-map (kbd "C-c m s") 'sync-make-current-file)
+(with-eval-after-load 'cc-mode
+  (define-key c++-mode-map (kbd "C-c m a") 'async-make-current-file)
+  (define-key c++-mode-map (kbd "C-c m s") 'sync-make-current-file))
+(with-eval-after-load 'python
+  (define-key python-mode-map (kbd "C-c m a") 'async-make-current-file)
+  (define-key python-mode-map (kbd "C-c m s") 'sync-make-current-file))
 
 (defun cpp-auto-format ()
   "Format cpp buffer on each save, formatting lines of code"
   (interactive)
   (when (string-equal major-mode "c++-mode")
-    (c-indent-region (point-min) (point-max))))
+    (c-indent-region (point-min) (point-max)))
+  (when (and (string-equal major-mode "org-mode")
+             (org-in-src-block-p))
+    (org-edit-special)
+    (indent-region (point-min) (point-max))
+    (org-edit-src-exit)))
 
 (add-hook 'before-save-hook 'cpp-auto-format)
 
@@ -591,8 +642,10 @@ This still requires you to quit Acrobat Reader with S-q"
 
 (use-package spotify
   :bind (:map spotify-mode-map
-              ("C-c ." . spotify-command-map))
+              ("C-c ." . spotify-command-map)
+              ("C-c . r" . spotify-recently-played))
   :config
+  (global-spotify-remote-mode -1) ; Enabling will start a background server to handle the oath token
   (setq spotify-helm-integration 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
