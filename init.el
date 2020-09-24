@@ -293,6 +293,7 @@
          ("C-c a" . org-agenda))
   :config
   ;; General settings
+  (setq org-startup-folded t)
   (setq org-default-notes-file "~/todo.org")
   (setq org-todo-keywords '((sequence
                              "TODO(t)" "IN-PROGRESS(i)" "WAITING(w)" "REDO(r)" "EXAMINE-SOLUTION(e)"
@@ -400,12 +401,27 @@
          (python-mode . lsp)
          (lsp-mode . lsp-enable-which-key-integration))
   :config
+  (setq gc-cons-threshold 100000000)    ; 100MB GC threshold (value in bytes)
+  (setq read-process-output-max (* 1024 1024)) ;; 1MB read threshold (value in bytes)
+  (setq lsp-idle-delay 0.500)
   (setq lsp-keymap-prefix "s-l")
   (setq lsp-auto-guess-root t)
   (setq lsp-enable-symbol-highlighting nil))
 
+(use-package ccls
+  ;; Remember the following:
+  ;;   1. Build CCLS through CMake
+  ;;   2. Initialize the 'ccls-executable' symbol into the custom files
+  ;;   3. Copy paste any missing include files to the include directory used by ccls
+  :hook ((c-mode c++-mode objc-mode cuda-mode) .
+         (lambda () (require 'ccls) (lsp))))
+
 (use-package lsp-ui
-  :commands lsp-ui-mode)
+  :bind ("C-c j" . lsp-ui-doc-show)
+  :config
+  (setq lsp-ui-doc-enable nil)
+  (setq lsp-ui-doc-include-signature t)
+  (setq lsp-ui-doc-position 'at-point))
 
 (use-package helm-lsp
   :bind ([remap xref-find-apropos] . helm-lsp-workspace-symbol)
@@ -502,17 +518,18 @@ This still requires you to quit Acrobat Reader with S-q"
   "Toggle indentation settings between editing & exporting code blocks"
   (interactive)
   (setq org-src-preserve-indentation nil)
-  (setq org-edit-src-content-indentation 0))
+  (setq org-edit-src-content-indentation 0)
+  (setq org-src-ask-before-returning-to-edit-buffer nil))
 
 (defun org-document-imenu-depth ()
   "Set imenu depth for helm to use for specific org mode documents"
   (interactive)
-  (unless (string-equal major-mode "org-mode") nil)
-  (cond ((and (buffer-file-name)
-              (string-equal (file-name-base) "cpp_reference_list"))
-         (setq org-imenu-depth 3))
-        (t
-         (setq org-imenu-depth 2))))
+  (when (and (string-equal major-mode "org-mode") (buffer-file-name))
+    (cond ((or (string-equal (file-name-base) "cpp_reference_list")
+               (string-equal (file-name-base) "python_reference_list"))
+           (setq org-imenu-depth 3))
+          (t
+           (setq org-imenu-depth 2)))))
 
 (defun org-update-last-edit-timestamp ()
   "Updates the date header in the todo document"
@@ -641,6 +658,7 @@ This still requires you to quit Acrobat Reader with S-q"
   (call-interactively #'prompt-spotify-oauth-credentials))
 
 (use-package spotify
+  ;; Make sure to use local forked version with helm integration if it's still not merged to master"
   :bind (:map spotify-mode-map
               ("C-c ." . spotify-command-map)
               ("C-c . r" . spotify-recently-played))
