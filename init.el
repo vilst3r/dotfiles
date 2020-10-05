@@ -106,26 +106,21 @@
 (setq size-indication-mode t)
 (setq echo-keystrokes .1)
 
-(setq-default whitespace-style '(face lines-tail) ; Highlight lines past fill column
-              truncate-lines nil                  ; Disable horizontal scroll
+(setq-default truncate-lines nil                  ; Disable horizontal scroll
               indent-tabs-mode nil)               ; Use spaces instead of tabs
 
-(defun setup-autofill (value &optional toggle-whitespace-mode)
-  "Initializes fill column, highlights characters past fill column & hard wraps on newline"
+(defun setup-autofill (fill-value)
+  "Initializes fill column, draws ruler & hard wraps on newline"
   (interactive)
-  (setq fill-column value)
+  (setq fill-column fill-value)
   (auto-fill-mode 1)
-  (when toggle-whitespace-mode          ; Reset whitespace value if it exists
-    (whitespace-mode 0)
-    (setq whitespace-line-column value)
-    (whitespace-mode 1)))
+  (unless (string-equal major-mode "org-mode")
+    (display-fill-column-indicator-mode)))
 
 (add-hook 'before-save-hook 'whitespace-cleanup)
-(add-hook 'prog-mode-hook (lambda () (setup-autofill 80 t)))
-(add-hook 'text-mode-hook (lambda () (setup-autofill 80 nil)))
-(add-hook 'emacs-lisp-mode-hook (lambda () (setup-autofill 100 t)))
-(add-hook 'markdown-mode-hook (lambda () (setup-autofill 80 t)))
-(add-hook 'LaTeX-mode-hook (lambda () (setup-autofill 80 t)))
+(add-hook 'prog-mode-hook (lambda () (setup-autofill 80)))
+(add-hook 'text-mode-hook (lambda () (setup-autofill 80)))
+(add-hook 'emacs-lisp-mode-hook (lambda () (setup-autofill 100)))
 
 ;; Visual Styling - Doom theme
 (use-package all-the-icons)
@@ -559,28 +554,39 @@ This still requires you to quit Acrobat Reader with S-q"
 
 (define-key prog-mode-map (kbd "C-c v") 'toggle-evil)
 
+(define-minor-mode algorithm-mode
+  "Toggle mode for practicing coding problems or algorithms"
+  :lighter algorithm-mode
+  (if algorithm-mode
+      (progn
+        (toggle-evil)
+        (company-mode 0)
+        (flymake-mode 0)
+        (flycheck-mode 0))
+    (progn
+      (toggle-evil)
+      (company-mode 1)
+      (flymake-mode 1)
+      (flycheck-mode 1))))
+
 (defun practice-config ()
   "Turn off syntax checking & auto-completion for practice purposes"
+  (setq selected-files '("codeforces" "leetcode" "atcoder"))
   (when (or (string-equal (projectile-project-name) "EPIJudge")
             (and (buffer-file-name)
-                 (string-equal (file-name-base (buffer-file-name)) "codeforces"))
-            (and(buffer-file-name)
-                (string-equal (file-name-base (buffer-file-name)) "leetcode"))
-            (and(buffer-file-name)
-                (string-equal (file-name-base (buffer-file-name)) "atcoder")))
-    (toggle-evil)
-    (company-mode 0)
-    (flymake-mode 0)
-    (flycheck-mode 0)))
+                 (member (file-name-base (buffer-file-name)) selected-files)))
+    (algorithm-mode)))
 
 (add-hook 'c++-mode-hook 'practice-config)
 (add-hook 'python-mode-hook 'practice-config)
 
 (defun sync-make-current-file ()
-  "Execute Makefile on current file synchronously"
+  "Execute Makefile or run the current file synchronously"
   (interactive)
   (let ((command (cond ((string-equal major-mode "c++-mode")
-                        (format "make %s" (file-name-base)))
+                        (if (string-equal (projectile-project-name) "EPIJudge")
+                            (format "make %s" (file-name-base))
+                          (format "make %s -C build && build/%s" (file-name-base) (file-name-base))))
                        ((string-equal major-mode "python-mode")
                         (format "python3 %s.py" (file-name-base))))))
     (save-window-excursion
@@ -590,10 +596,12 @@ This still requires you to quit Acrobat Reader with S-q"
     (goto-char (point-max))))
 
 (defun async-make-current-file ()
-  "Execute Makefile on current file synchronously"
+  "Execute Makefile or run the current file asynchronously"
   (interactive)
   (let ((command (cond ((string-equal major-mode "c++-mode")
-                        (format "make %s" (file-name-base)))
+                        (if (string-equal (projectile-project-name) "EPIJudge")
+                            (format "make %s" (file-name-base))
+                          (format "make %s -C build && build/%s" (file-name-base) (file-name-base))))
                        ((string-equal major-mode "python-mode")
                         (format "python3 %s.py" (file-name-base))))))
     (async-shell-command command)
