@@ -379,9 +379,11 @@
   (setq evil-insert-state-cursor nil    ; Default caret for insert & operator mode
         evil-operator-state-cursor nil
         evil-replace-state-cursor nil)
+  (evil-set-undo-system 'undo-tree)
   (evil-set-leader 'normal (kbd ","))
   (evil-define-key 'normal 'global (kbd "<leader>ms") 'sync-make-current-file)
   (evil-define-key 'normal 'global (kbd "<leader>ma") 'async-make-current-file)
+  (evil-define-key 'visual 'global (kbd ".s") 'sort-lines)
   (setq evil-complete-next-func 'company-select-next ; Use company over dabbrev for autocompletion
         evil-complete-previous-func 'company-select-previous))
 
@@ -428,6 +430,12 @@
   (setq company-lsp-cache-candidates 'auto)
   (push 'company-lsp company-backends))
 
+(use-package python
+  :bind (("M-[" . python-nav-backward-block)
+         ("s-[" . python-nav-backward-block)
+         ("M-]" . python-nav-forward-block)
+         ("s-]" . python-nav-forward-block)))
+
 (use-package lsp-pyright
   :ensure t
   :hook (python-mode . (lambda () (require 'lsp-pyright) (lsp)))) ; or lsp-deferred
@@ -435,6 +443,26 @@
 (use-package py-autopep8
   :hook
   (python-mode . py-autopep8-enable-on-save))
+
+(use-package py-isort
+  :after python
+  :hook ((python-mode . pyvenv-mode)
+         (before-save . py-isort-before-save)))
+
+(use-package pyvenv
+  :after python
+  :bind (("C-c 1 w" . pyvenv-workon)
+         ("C-c 1 c" . pyvenv-create)
+         ("C-c 1 d" . pyvenv-deactivate))
+  :hook (python-mode . pyvenv-mode)
+  :custom
+  (pyvenv-default-virtual-env-name "env")
+  (pyvenv-mode-line-indicator '(pyvenv-virtual-env-name ("[venv:\""
+                                                         pyvenv-virtual-env-name "\"]")))
+  :config
+  (add-hook 'pyvenv-post-create-hooks 'save-and-reload-buffer)
+  (add-hook 'pyvenv-post-activate-hooks 'save-and-reload-buffer)
+  (add-hook 'pyvenv-post-deactivate-hooks 'save-and-reload-buffer))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     Javascript Configurations                                  ;;
@@ -494,6 +522,12 @@
   (move-to-column column t))
 
 (global-set-key (kbd "M-g TAB") 'move-to-column-force)
+
+(defun save-and-reload-buffer ()
+  "Saves & reloads buffer to update environment values in the modeline or reload the LSP client
+through hooks"
+  (save-buffer)
+  (revert-buffer :ignore-auto :noconfirm))
 
 (defun latex-reload-pdf ()
   "Compiles & opens the TeX-mode document while removing the pop up shell output window.
