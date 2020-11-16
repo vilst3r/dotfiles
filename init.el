@@ -194,7 +194,8 @@
 (use-package yasnippet-snippets
   :config
   (yas-reload-all)
-  (setq yas-triggers-in-field t))
+  (setq yas-triggers-in-field t)
+  (yas-global-mode 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                               Magit                                            ;;
@@ -414,7 +415,8 @@
          (lambda () (require 'ccls) (lsp))))
 
 (use-package lsp-ui
-  :bind ("C-c j" . lsp-ui-doc-show)
+  :bind (("C-c j" . lsp-ui-doc-show)
+         ("C-c l f" . lsp-ui-flycheck-list))
   :config
   (setq lsp-ui-doc-enable nil)
   (setq lsp-ui-doc-include-signature t)
@@ -573,35 +575,46 @@ This still requires you to quit Acrobat Reader with S-q"
 
 (add-hook 'before-save-hook 'org-update-last-edit-timestamp)
 
-(defun toggle-evil ()
-  "Toggles evil mode with relative line numbering locally"
-  (interactive)
-  (if evil-local-mode
-      (progn
-        (turn-off-evil-mode)
-        (setq-local display-line-numbers nil)
-        (yas-minor-mode 1))
-    (progn
-      (turn-on-evil-mode)
-      (setq-local display-line-numbers 'relative)
-      (yas-minor-mode 1))))
+(defcustom projectile-evil-mode-cache nil
+  "List of cached projects last used during evil-mode"
+  :type 'list
+  :group 'projectile)
 
-(define-key prog-mode-map (kbd "C-c v") 'toggle-evil)
+(define-minor-mode custom-evil-mode
+  "Toggle customized settings between default emacs & vim (evil)"
+  :lighter custom-evil-mode
+  (evil-local-mode custom-evil-mode)
+  (setq-local display-line-numbers (when custom-evil-mode 'relative)))
+
+(defun toggle-evil-interactive ()
+  "Toggles customized evil mode with persistent settings for projects under projectile"
+  (interactive)
+  (if custom-evil-mode
+      (custom-evil-mode 0)
+    (custom-evil-mode 1))
+  (when (not (string-equal (projectile-project-name) "-")) ; cache projectile settings
+    (if (member (projectile-project-name) projectile-evil-mode-cache)
+        (customize-save-variable 'projectile-evil-mode-cache
+                                 (delete (projectile-project-name)
+                                         projectile-evil-mode-cache))
+      (customize-save-variable 'projectile-evil-mode-cache
+                               (add-to-list 'projectile-evil-mode-cache
+                                            (projectile-project-name))))))
+
+(add-hook 'prog-mode-hook (lambda ()
+                            (when (member (projectile-project-name) projectile-evil-mode-cache)
+                              (custom-evil-mode))))
+
+(define-key prog-mode-map (kbd "C-c v") 'toggle-evil-interactive)
+
+(define-key prog-mode-map (kbd "C-c C-q") 'apply-macro-to-region-lines)
 
 (define-minor-mode algorithm-mode
   "Toggle mode for practicing coding problems or algorithms"
   :lighter algorithm-mode
-  (if algorithm-mode
-      (progn
-        (toggle-evil)
-        (company-mode 0)
-        (flymake-mode 0)
-        (flycheck-mode 0))
-    (progn
-      (toggle-evil)
-      (company-mode 1)
-      (flymake-mode 1)
-      (flycheck-mode 1))))
+  (company-mode (if algorithm-mode 0 1))
+  (flymake-mode (if algorithm-mode 0 1))
+  (flycheck-mode (if algorithm-mode 0 1)))
 
 (defun practice-config ()
   "Turn off syntax checking & auto-completion for practice purposes"
@@ -614,32 +627,42 @@ This still requires you to quit Acrobat Reader with S-q"
 (add-hook 'c++-mode-hook 'practice-config)
 (add-hook 'python-mode-hook 'practice-config)
 
-(defun sync-make-current-file ()
-  "Execute Makefile or run the current file synchronously"
-  (interactive)
-  (let ((command (cond ((string-equal major-mode "c++-mode")
-                        (if (string-equal (projectile-project-name) "EPIJudge")
-                            (format "make %s" (file-name-base))
-                          (format "make %s -C build && build/%s" (file-name-base) (file-name-base))))
-                       ((string-equal major-mode "python-mode")
-                        (format "python3 %s.py" (file-name-base))))))
-    (save-window-excursion
-      (shell-command command)
-      (with-current-buffer "*Shell Command Output*" (help-mode)))
-    (switch-to-buffer "*Shell Command Output*")
-    (goto-char (point-max))))
+(defun get-executable-command ()
+  "Modify command to appropriate make command for Python & C++ "
+  (cond ((string-equal major-mode "c++-mode")
+         (if (string-equal (projectile-project-name) "EPIJudge")
+             (format "make %s" (file-name-base))
+           (format "make %s -C build && build/%s" (file-name-base) (file-name-base))))
+        ((string-equal major-mode "python-mode")
+         (format "python3 %s.py" (file-name-base)))
+        (t nil)))
 
-(defun async-make-current-file ()
+(defun sync-make-current-file (&optional split-window)
+  "Execute Makefile or run the current file synchronously"
+  (interactive "P")
+  (when-let ((command (get-executable-command)))
+    (if split-window
+        (save-excursion
+          (shell-command command)
+          (pop-to-buffer "*Shell Command Output*")
+          (help-mode)
+          (goto-char (point-max))
+          (other-window -1))
+      (progn
+        (save-window-excursion
+          (shell-command command)
+          (with-current-buffer "*Shell Command Output*" (help-mode)))
+        (switch-to-buffer "*Shell Command Output*")
+        (goto-char (point-max))))))
+
+(defun async-make-current-file (&optional split-window)
   "Execute Makefile or run the current file asynchronously"
-  (interactive)
-  (let ((command (cond ((string-equal major-mode "c++-mode")
-                        (if (string-equal (projectile-project-name) "EPIJudge")
-                            (format "make %s" (file-name-base))
-                          (format "make %s -C build && build/%s" (file-name-base) (file-name-base))))
-                       ((string-equal major-mode "python-mode")
-                        (format "python3 %s.py" (file-name-base))))))
+  (interactive "P")
+  (when-let ((command (get-executable-command)))
     (async-shell-command command)
-    (switch-to-buffer "*Async Shell Command*")
+    (if split-window
+        (pop-to-buffer "*Async Shell Command*")
+      (switch-to-buffer "*Async Shell Command*"))
     (if (process-live-p (get-buffer-process (current-buffer)))
         (set-process-sentinel (get-buffer-process (current-buffer))
                               (lambda (process signal)
@@ -701,7 +724,9 @@ This still requires you to quit Acrobat Reader with S-q"
 
 (use-package spotify
   ;; Make sure to use local forked version with helm integration if it's still not merged to master"
-  :bind (:map spotify-mode-map
+  :bind
+  (("C-c g s" . global-spotify-remote-mode)
+   :map spotify-mode-map
               ("C-c ." . spotify-command-map)
               ("C-c . r" . spotify-recently-played))
   :config
