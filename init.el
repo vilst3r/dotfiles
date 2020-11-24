@@ -162,7 +162,7 @@
 
 ;; Auto-completion
 (use-package company
-  :hook (after-init . global-company-mode)
+  :hook (prog-mode . company-mode)
   :bind (:map company-active-map
               ("C-p" . company-select-previous)
               ("C-n" . company-select-next)
@@ -392,19 +392,30 @@
 ;;                                     Development Configurations                                 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(use-package dockerfile-mode)
+(use-package vimrc-mode)
+
 (use-package lsp-mode
   :commands lsp
   :hook ((c-mode . lsp)
          (c-or-c++-mode . lsp)
          (python-mode . lsp)
+         (web-mode . lsp)
+         (css-mode . lsp)
+         (cmake-mode . lsp)
+         (sh-mode . lsp)
+         (dockerfile-mode . lsp)
+         (vimrc-mode . lsp)
          (lsp-mode . lsp-enable-which-key-integration))
   :config
   (setq gc-cons-threshold 100000000)    ; 100MB GC threshold (value in bytes)
   (setq read-process-output-max (* 1024 1024)) ;; 1MB read threshold (value in bytes)
   (setq lsp-idle-delay 0.500)
   (setq lsp-keymap-prefix "s-l")
-  (setq lsp-auto-guess-root t)
   (setq lsp-enable-symbol-highlighting nil))
+
+(use-package company-box
+  :hook (company-mode . company-box-mode))
 
 (use-package ccls
   ;; Remember the following:
@@ -418,6 +429,9 @@
   :bind (("C-c j" . lsp-ui-doc-show)
          ("C-c l f" . lsp-ui-flycheck-list))
   :config
+  (define-key lsp-ui-mode-map [remap js-find-symbol] #'lsp-ui-peek-find-definitions)
+  (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
+  (define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references)
   (setq lsp-ui-doc-enable nil)
   (setq lsp-ui-doc-include-signature t)
   (setq lsp-ui-doc-position 'at-point))
@@ -431,12 +445,6 @@
   :config
   (setq company-lsp-cache-candidates 'auto)
   (push 'company-lsp company-backends))
-
-(use-package python
-  :bind (("M-[" . python-nav-backward-block)
-         ("s-[" . python-nav-backward-block)
-         ("M-]" . python-nav-forward-block)
-         ("s-]" . python-nav-forward-block)))
 
 (use-package lsp-pyright
   :ensure t
@@ -466,57 +474,38 @@
   (add-hook 'pyvenv-post-activate-hooks 'save-and-reload-buffer)
   (add-hook 'pyvenv-post-deactivate-hooks 'save-and-reload-buffer))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                     Javascript Configurations                                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package xref-js2)
-
-(defun configure-xref-js2-jtd ()
-  "This replaces the js2-mode jtd with xref-js2 (using ag search) instead"
-  (define-key js-mode-map (kbd "M-.") nil)
-  (js2-imenu-extras-mode)
-  (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t))
-
-(use-package js2-mode
-  :requires xref-js2
-  :mode ("\\.js\\'" . js2-mode)
-  :hook (js2-mode . configure-xref-js2-jtd)
-  :config
-  (setq js2-basic-offset 2)
-  (setq js2-indent-level 2))
-
-;; Typescript configurations
-(defun setup-tide-mode ()
-  "Interactively initializes the tide"
-  (interactive)
-  (tide-setup)
-  (tide-hl-identifier-mode))
-
-(use-package tide
-  :after (typescript-mode company flycheck)
-  :hook ((typescript-mode . setup-tide-mode)
-         (before-save . tide-format-before-save))
-  :config
-  (setq company-tooltip-align-annotations t))    ;; aligns annotation to the right hand side
-
-;; React Configuration
-(defun current-file-is-react ()
-  "Returns t if the current source file is a react template otherwise nil"
-  (or (string-equal "tsx" (file-name-extension buffer-file-name))
-      (string-equal "jsx" (file-name-extension buffer-file-name))))
-
 (use-package web-mode
-  :mode (("\\.tsx\\'" . web-mode)
-         ("\\.jsx\\'" . web-mode)
-         ("\\.html\\'" . web-mode)
-         ("\\.css\\'" . web-mode))
-  :hook (web-mode . (lambda () (when (current-file-is-react)
-                                 (setup-tide-mode)))))
+  :ensure t
+  :mode (("\\.js\\'" . web-mode)
+           ("\\.jsx\\'" . web-mode)
+           ("\\.ts\\'" . web-mode)
+           ("\\.tsx\\'" . web-mode)
+           ("\\.html\\'" . web-mode)
+           ("\\.vue\\'" . web-mode)
+           ("\\.json\\'" . web-mode))
+  :commands web-mode
+  :config
+  (setq company-tooltip-align-annotations t)
+  (setq web-mode-markup-indent-offset 2)
+  (setq web-mode-css-indent-offset 2)
+  (setq web-mode-code-indent-offset 2)
+  (setq web-mode-enable-part-face t)
+  (setq web-mode-content-types-alist
+          '(("jsx" . "\\.js[x]?\\'"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                                Misc                                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun arrayify (start end quote)
+  "Turn strings on newlines into a QUOTEd, comma-separated one-liner."
+  (interactive "r\nMQuote: ")
+  (let ((insertion
+         (mapconcat
+          (lambda (x) (format "%s%s%s" quote x quote))
+          (split-string (buffer-substring start end)) ", ")))
+    (delete-region start end)
+    (insert insertion)))
 
 (defun move-to-column-force (column)
   "Go to column number, adding whitespaces if necessary"
@@ -583,7 +572,7 @@ This still requires you to quit Acrobat Reader with S-q"
 (define-minor-mode custom-evil-mode
   "Toggle customized settings between default emacs & vim (evil)"
   :lighter custom-evil-mode
-  (evil-local-mode custom-evil-mode)
+  (evil-local-mode (if custom-evil-mode t -1))
   (setq-local display-line-numbers (when custom-evil-mode 'relative)))
 
 (defun toggle-evil-interactive ()
@@ -626,6 +615,11 @@ This still requires you to quit Acrobat Reader with S-q"
 
 (add-hook 'c++-mode-hook 'practice-config)
 (add-hook 'python-mode-hook 'practice-config)
+
+(define-minor-mode pair-programming-mode
+  "Toggle mode for pair programming"
+  :lighter pair-programming-mode
+  (setq display-line-numbers (if pair-programming-mode t nil)))
 
 (defun get-executable-command ()
   "Modify command to appropriate make command for Python & C++ "
