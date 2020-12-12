@@ -394,6 +394,8 @@
 
 (use-package dockerfile-mode)
 (use-package vimrc-mode)
+(use-package yaml-mode)
+(use-package gitignore-mode)
 
 (use-package lsp-mode
   :commands lsp
@@ -497,15 +499,31 @@
 ;;                                                Misc                                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun arrayify (start end quote)
-  "Turn strings on newlines into a QUOTEd, comma-separated one-liner."
+(defun arrarify (start end quote)
+  "Turn strings on newlines into a quoted, comma-separated one-liner."
   (interactive "r\nMQuote: ")
   (let ((insertion
          (mapconcat
           (lambda (x) (format "%s%s%s" quote x quote))
-          (split-string (buffer-substring start end)) ", ")))
+          (split-string (buffer-substring start end) "\n" t) ", ")))
     (delete-region start end)
     (insert insertion)))
+
+(defun shuffle-array (start end)
+  "Shuffle elements of an array into a new permutation with PRNG (use without enclosing delimiters)"
+  (interactive "r\n")
+  (let* ((str (buffer-substring-no-properties start end))
+         (arr (split-string-and-unquote str "[,\s]+"))
+         (n (length arr)))
+    (dotimes (i n)
+      (let* ((num-of-candidates (- n i))
+             (value (random num-of-candidates))
+             (idx (+ i value))
+             (i-copy (elt arr i)))
+        (setf (nth i arr) (nth idx arr))
+        (setf (nth idx arr) i-copy)))
+    (delete-region start end)
+    (insert (mapconcat (lambda (x) x) arr ", "))))
 
 (defun move-to-column-force (column)
   "Go to column number, adding whitespaces if necessary"
