@@ -197,6 +197,12 @@
   (setq yas-triggers-in-field t)
   (yas-global-mode 1))
 
+(use-package  string-inflection
+  :after helm
+  :bind (("C-c C-u" . string-inflection-all-cycle)
+         :map helm-map
+         ("C-c C-u" . string-inflection-all-cycle)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                               Magit                                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -414,7 +420,8 @@
   (setq read-process-output-max (* 1024 1024)) ;; 1MB read threshold (value in bytes)
   (setq lsp-idle-delay 0.500)
   (setq lsp-keymap-prefix "s-l")
-  (setq lsp-enable-symbol-highlighting nil))
+  (setq lsp-enable-symbol-highlighting nil)
+  (setq lsp-headerline-breadcrumb-enable nil))
 
 (use-package company-box
   :hook (company-mode . company-box-mode))
@@ -499,6 +506,46 @@
 ;;                                                Misc                                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defun helm-parse-unix-timestamp (&optional timestamp)
+  " Parses a unix timestamp to a specified timezone & date string through the helm interface "
+  (let ((timezones `(("San Francisco, Seattle - Pacific Standard Time (PST)" . ,(* -8 3600))
+                     ("San Francisco, Seattle - Pacific Daylight Time (PDT)" . ,(* -7 3600))
+                     ("New York - Eastern Standard Time (EST)" . ,(* -5 3600))
+                     ("New York - Eastern Daylight Time (EDT)" . ,(* -4 3600))
+                     ("San Paulo, Buenos Aires - Argentina Standard Time (ART)" . ,(* -3 3600))
+                     ("London - Greenwich Mean Time (GMT)" . ,(* 0 3600))
+                     ("London - British Summer Time (BST)" . ,(* 1 3600))
+                     ("Paris, Berlin - Central European Time (CET)" . ,(* 1 3600))
+                     ("Paris, Berlin - Central European Summer Time (CEST)" . ,(* 2 3600))
+                     ("Moscow - Moscow Standard Time (MSK)" . ,(* 3 3600))
+                     ("Dubai - Gulf Standard Time (GST)" . ,(* 4 3600))
+                     ("Saigon, Jakarta - Indochina Time (ICT)" . ,(* 7 3600))
+                     ("Beijing - China Standard Time (CST)" . ,(* 8 3600))
+                     ("Perth - Australian Western Standard Time (AWST)" . ,(* 8 3600))
+                     ("Perth - Australian Western Daylight Time (AWDT)" . ,(* 9 3600))
+                     ("Tokyo - Japan Standard Time (JST)" . ,(* 9 3600))
+                     ("Seoul - Korea Standard Time (KST)" . ,(* 9 3600))
+                     ("Sydney - Australian Eastern Standard Time (AEST)" . ,(* 10 3600))
+                     ("Sydney - Australian Eastern Daylight Time (AEDT)" . ,(* 11 3600))
+                     ("Auckland - New Zealand Standard Time (NZST)" . ,(* 12 3600))
+                     ("Auckland - New Zealand Daylight Time  (NZDT)" . ,(* 13 3600))))
+        (time-formats '("<%Y-%m-%d %a %H:%M:%S>")))
+    (helm :sources (helm-build-sync-source "Timezone format"
+                     :candidates (mapcar 'car timezones)
+                     :display-to-real (lambda (candidate) (cdr (assoc candidate timezones)))
+                     :action '(("Select timezone" . (lambda (timezone)
+                                                      (when helm-in-persistent-action
+                                                        (helm-exit-minibuffer))
+                                                      (helm :sources
+                                                            (helm-build-sync-source "Timestring format"
+                                                              :candidates time-formats
+                                                              :action '(("Select time-string format"
+                                                                         . (lambda (time-format)
+                                                                             (format-time-string time-format (seconds-to-time timestamp) timezone))))
+                                                              :fuzzy-match t)))))
+                     :fuzzy-match t)
+          :buffer "*helm misc*")))
+
 (defun arrarify (start end quote)
   "Turn strings on newlines into a quoted, comma-separated one-liner."
   (interactive "r\nMQuote: ")
@@ -524,6 +571,16 @@
         (setf (nth idx arr) i-copy)))
     (delete-region start end)
     (insert (mapconcat (lambda (x) x) arr ", "))))
+
+(defun insert-relative-path ()
+  " Inserts the relative path from the root of the projectile if it exists"
+  (interactive)
+  (insert (file-relative-name buffer-file-name (projectile-project-root))))
+
+(defun insert-current-path ()
+  " Inserts the current path of the buffer"
+  (interactive)
+  (insert (buffer-file-name)))
 
 (defun move-to-column-force (column)
   "Go to column number, adding whitespaces if necessary"
@@ -611,10 +668,12 @@ This still requires you to quit Acrobat Reader with S-q"
 (add-hook 'prog-mode-hook (lambda ()
                             (when (member (projectile-project-name) projectile-evil-mode-cache)
                               (custom-evil-mode))))
-
+
 (define-key prog-mode-map (kbd "C-c v") 'toggle-evil-interactive)
 
 (define-key prog-mode-map (kbd "C-c C-q") 'apply-macro-to-region-lines)
+
+(define-key lisp-interaction-mode-map (kbd "C-j") nil) ;; use vim join line from global map
 
 (define-minor-mode algorithm-mode
   "Toggle mode for practicing coding problems or algorithms"
