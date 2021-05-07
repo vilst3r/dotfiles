@@ -1,5 +1,5 @@
 # Extend .bashrc if exists
-if [ -f $HOME/.bashrc ] 
+if [ -f $HOME/.bashrc ]
 then
     source ~/.bashrc
 fi
@@ -17,14 +17,14 @@ export HISTTIMEFORMAT='%F %T ' # Timestamp each bash call
 # Use vim keybinds for bash input stream
 set -o vi
 
-# Prioritise homebrew binaries if underlying platform is OSX
-if [ "$(uname)" == "Darwin" ]; then
-    export PATH=/usr/local/bin:/usr/local/sbin:$PATH
-fi
-
 # Aliases
 alias python=python3
 alias pip=pip3
+
+# Use brew binary for ARM-based Mac machines
+if [ "$(uname)" == "Darwin" ] && [ -d /opt/homebrew ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
 
 if test $(which python); then
     export PATH=$PATH:$(python -m site --user-base)/bin
