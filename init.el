@@ -42,24 +42,10 @@
 ;;                                                GUI                                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar default-frame-alpha '(100 . 85)
-  "Default frame parameter with no transparency")
-(defvar transparent-frame-alpha '(85 . 75)
-  "Frame parameter with my configured measure of transparency")
-
-(defun toggle-transparency ()
-  "Toggle transparency of the current emacs frame. (active-frame-opacity . inactive-frame-opacity)."
-  (interactive)
-  (if (equal (frame-parameter (selected-frame) 'alpha) default-frame-alpha)
-      (set-frame-parameter (selected-frame) 'alpha transparent-frame-alpha)
-    (set-frame-parameter (selected-frame) 'alpha default-frame-alpha)))
-
-(global-set-key (kbd "C-c t") 'toggle-transparency)
-(global-set-key (kbd "C-c f") 'toggle-frame-fullscreen)
-
 ;; Default frame parameters
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
-(add-to-list 'default-frame-alist `(alpha . ,default-frame-alpha))
+
+(global-set-key (kbd "C-c f") 'toggle-frame-fullscreen)
 
 ;; Hide unused GUI features to gain more screen pixels
 (tool-bar-mode   -1)  ; Remove the large Word-like editing icons at the top
@@ -291,40 +277,16 @@
   (org-mode . org-document-imenu-depth)
   (org-mode . (lambda () (company-mode -1)))
   (org-src-mode . org-toggle-src-content-indentation)
-  :bind (("C-c c" . org-capture)
-         ("C-c a" . org-agenda))
+  :bind ("C-c c" . org-capture)
   :config
   ;; General settings
   (setq org-startup-folded t)
   (setq org-default-notes-file "~/todo.org")
-  (setq org-todo-keywords '((sequence
-                             "TODO(t)" "IN-PROGRESS(i)" "WAITING(w)" "REDO(r)" "EXAMINE-SOLUTION(e)"
-                             "|" "DONE(d)" "UNRESOLVED(u)" "SKIPPED(s)")))
+  (setq org-todo-keywords '((sequence "TODO(t)" "IN-PROGRESS(i)" "REDO(r)" "|" "DONE(d)")))
   (setq org-ellipsis " ⤵")
   (setq org-return-follows-link t)
   (setq org-catch-invisible-edits 'show)
-  (setq org-enforce-todo-dependencies t)
   (add-to-list 'org-link-frame-setup  '(file . find-file)) ; visit links in same window
-  ;; Org Agenda Settings
-  (setq org-agenda-files (list org-default-notes-file))
-  (setq org-agenda-tags-column -10)
-  (setq org-agenda-show-all-dates t)
-  (setq org-agenda-skip-scheduled-if-done t)
-  (setq org-agenda-skip-deadline-if-done  t)
-  (setq org-agenda-text-search-extra-files '(agenda-archives))
-  (setq org-agenda-restore-windows-after-quit t)
-  (setq org-log-redeadline 'time)
-  (setq org-log-reschedule 'time)
-  (setq org-agenda-custom-commands
-        '(("c" "Completed tasks for archiving" todo "DONE"
-           ((org-agenda-overriding-header "Completed tasks for archiving")))
-          ("u" "Unscheduled TODO tasks" tags-todo "tasks"
-           ((org-agenda-skip-function
-             (lambda ()
-               (org-agenda-skip-entry-if 'scheduled 'deadline 'regexp  "\n]+>")))
-            (org-agenda-overriding-header "Unscheduled TODO Tasks: ")))
-          ("i" "Dangling tasks in progress" tags-todo "+tasks+TODO=\"IN-PROGRESS\""
-           ((org-agenda-overriding-header "Dangling tasks in progress")))))
   ;; Org Capture settings
   (setq org-capture-templates
         '(("t" "Tasks" entry (file+headline org-default-notes-file "Tasks")
@@ -342,37 +304,12 @@
         "g++ -std=c++17 -pthread -Werror -Wno-unused-variable -Wno-sign-compare -Wuninitialized")
   (setq org-babel-python-command "python3")
   (org-babel-do-load-languages          ; Languages supported for execution
-   'org-babel-load-languages '((emacs-lisp . t)
-                               (clojure    . t)
-                               (css        . t)
-                               (C          . t) ; Captial “C” gives access to C, C++, D
-                               (shell      . t)
+   'org-babel-load-languages '((C          . t) ; Captial “C” gives access to C, C++, D
                                (java       . t)
-                               (js         . t)
-                               (latex      . t)
-                               (lisp       . t)
-                               (makefile   . t)
-                               (python     . t)
-                               (ruby       . t)
-                               (sass       . t)
-                               (sql        . t))))
+                               (python     . t))))
 
 (use-package org-bullets
   :hook (org-mode . org-bullets-mode))
-
-(use-package org-fancy-priorities
-  :hook   (org-mode . org-fancy-priorities-mode)
-  :config
-  (setq org-lowest-priority ?D)         ; org-speed-key ‘C-c ,’ gives 4 priority options
-  (setq org-priority-faces
-        '((?A :foreground "red" :weight bold)
-          (?B . "orange")
-          (?C . "yellow")
-          (?D . "green")))
-  (setq org-fancy-priorities-list '("HIGH" "MID" "LOW" "OPTIONAL")))
-
-;; Export a Twitter Bootstrap HTML format of org file
-(use-package ox-twbs)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                           Evil Mode                                            ;;
@@ -402,17 +339,23 @@
 (use-package vimrc-mode)
 (use-package yaml-mode)
 (use-package gitignore-mode)
+(use-package terraform-mode)
+(use-package go-mode)
 
 (use-package lsp-mode
   :commands lsp
   :hook ((c-mode . lsp)
          (c-or-c++-mode . lsp)
          (python-mode . lsp)
+         (ruby-mode . lsp)
          (web-mode . lsp)
          (css-mode . lsp)
          (cmake-mode . lsp)
+         (go-mode . lsp)
          (sh-mode . lsp)
          (dockerfile-mode . lsp)
+         (yaml-mode . lsp)
+         (terraform-mode . lsp)
          (vimrc-mode . lsp)
          (lsp-mode . lsp-enable-which-key-integration))
   :config
@@ -448,12 +391,6 @@
 (use-package helm-lsp
   :bind ([remap xref-find-apropos] . helm-lsp-workspace-symbol)
   :commands helm-lsp-workspace-symbol)
-
-(use-package company-lsp
-  :commands company-lsp
-  :config
-  (setq company-lsp-cache-candidates 'auto)
-  (push 'company-lsp company-backends))
 
 (use-package lsp-pyright
   :ensure t
@@ -506,56 +443,6 @@
 ;;                                                Misc                                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun helm-parse-unix-timestamp (&optional timestamp)
-  " Parses a unix timestamp to a specified timezone & date string through the helm interface "
-  (let ((timezones `(("San Francisco, Seattle - Pacific Standard Time (PST)" . ,(* -8 3600))
-                     ("San Francisco, Seattle - Pacific Daylight Time (PDT)" . ,(* -7 3600))
-                     ("New York - Eastern Standard Time (EST)" . ,(* -5 3600))
-                     ("New York - Eastern Daylight Time (EDT)" . ,(* -4 3600))
-                     ("San Paulo, Buenos Aires - Argentina Standard Time (ART)" . ,(* -3 3600))
-                     ("London - Greenwich Mean Time (GMT)" . ,(* 0 3600))
-                     ("London - British Summer Time (BST)" . ,(* 1 3600))
-                     ("Paris, Berlin - Central European Time (CET)" . ,(* 1 3600))
-                     ("Paris, Berlin - Central European Summer Time (CEST)" . ,(* 2 3600))
-                     ("Moscow - Moscow Standard Time (MSK)" . ,(* 3 3600))
-                     ("Dubai - Gulf Standard Time (GST)" . ,(* 4 3600))
-                     ("Saigon, Jakarta - Indochina Time (ICT)" . ,(* 7 3600))
-                     ("Beijing - China Standard Time (CST)" . ,(* 8 3600))
-                     ("Perth - Australian Western Standard Time (AWST)" . ,(* 8 3600))
-                     ("Perth - Australian Western Daylight Time (AWDT)" . ,(* 9 3600))
-                     ("Tokyo - Japan Standard Time (JST)" . ,(* 9 3600))
-                     ("Seoul - Korea Standard Time (KST)" . ,(* 9 3600))
-                     ("Sydney - Australian Eastern Standard Time (AEST)" . ,(* 10 3600))
-                     ("Sydney - Australian Eastern Daylight Time (AEDT)" . ,(* 11 3600))
-                     ("Auckland - New Zealand Standard Time (NZST)" . ,(* 12 3600))
-                     ("Auckland - New Zealand Daylight Time  (NZDT)" . ,(* 13 3600))))
-        (time-formats '("<%Y-%m-%d %a %H:%M:%S>")))
-    (helm :sources (helm-build-sync-source "Timezone format"
-                     :candidates (mapcar 'car timezones)
-                     :display-to-real (lambda (candidate) (cdr (assoc candidate timezones)))
-                     :action '(("Select timezone" . (lambda (timezone)
-                                                      (when helm-in-persistent-action
-                                                        (helm-exit-minibuffer))
-                                                      (helm :sources
-                                                            (helm-build-sync-source "Timestring format"
-                                                              :candidates time-formats
-                                                              :action '(("Select time-string format"
-                                                                         . (lambda (time-format)
-                                                                             (format-time-string time-format (seconds-to-time timestamp) timezone))))
-                                                              :fuzzy-match t)))))
-                     :fuzzy-match t)
-          :buffer "*helm misc*")))
-
-(defun arrarify (start end quote)
-  "Turn strings on newlines into a quoted, comma-separated one-liner."
-  (interactive "r\nMQuote: ")
-  (let ((insertion
-         (mapconcat
-          (lambda (x) (format "%s%s%s" quote x quote))
-          (split-string (buffer-substring start end) "\n" t) ", ")))
-    (delete-region start end)
-    (insert insertion)))
-
 (defun shuffle-array (start end)
   "Shuffle elements of an array into a new permutation with PRNG (use without enclosing delimiters)"
   (interactive "r\n")
@@ -572,15 +459,21 @@
     (delete-region start end)
     (insert (mapconcat (lambda (x) x) arr ", "))))
 
-(defun insert-relative-path ()
-  " Inserts the relative path from the root of the projectile if it exists"
+(defun copy-relative-path ()
+  "Copies the relative path into the clipboard from the root of the projectile if it exists"
   (interactive)
-  (insert (file-relative-name buffer-file-name (projectile-project-root))))
+  (let ((path (file-relative-name buffer-file-name (projectile-project-root))))
+    (with-temp-buffer
+      (insert path)
+      (clipboard-kill-region (point-min) (point-max)))))
 
-(defun insert-current-path ()
-  " Inserts the current path of the buffer"
+(defun copy-current-path ()
+  "Copies the current path of the buffer into the clipboard"
   (interactive)
-  (insert (buffer-file-name)))
+  (let ((path (buffer-file-name)))
+    (with-temp-buffer
+      (insert path)
+      (clipboard-kill-region (point-min) (point-max)))))
 
 (defun move-to-column-force (column)
   "Go to column number, adding whitespaces if necessary"
@@ -588,6 +481,8 @@
   (move-to-column column t))
 
 (global-set-key (kbd "M-g TAB") 'move-to-column-force)
+(global-set-key (kbd "C-c 2 c") 'copy-current-path)
+(global-set-key (kbd "C-c 2 r") 'copy-relative-path)
 
 (defun save-and-reload-buffer ()
   "Saves & reloads buffer to update environment values in the modeline or reload the LSP client
@@ -627,7 +522,7 @@ This still requires you to quit Acrobat Reader with S-q"
            (setq org-imenu-depth 2)))))
 
 (defun org-update-last-edit-timestamp ()
-  "Updates the date header in the todo document"
+  "Updates the date header in a org document"
   (interactive)
   (when (string-equal major-mode "org-mode")
     (save-excursion
@@ -670,7 +565,6 @@ This still requires you to quit Acrobat Reader with S-q"
                               (custom-evil-mode))))
 
 (define-key prog-mode-map (kbd "C-c v") 'toggle-evil-interactive)
-
 (define-key prog-mode-map (kbd "C-c C-q") 'apply-macro-to-region-lines)
 
 (define-key lisp-interaction-mode-map (kbd "C-j") nil) ;; use vim join line from global map
@@ -692,11 +586,6 @@ This still requires you to quit Acrobat Reader with S-q"
 
 (add-hook 'c++-mode-hook 'practice-config)
 (add-hook 'python-mode-hook 'practice-config)
-
-(define-minor-mode pair-programming-mode
-  "Toggle mode for pair programming"
-  :lighter pair-programming-mode
-  (setq display-line-numbers (if pair-programming-mode t nil)))
 
 (defun get-executable-command ()
   "Modify command to appropriate make command for Python & C++ "

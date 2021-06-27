@@ -1,0 +1,19 @@
+# Personal GitHub account
+Host github.com-personal
+ HostName github.com
+ User git
+ AddKeysToAgent yes
+ UseKeychain yes
+ IdentityFile ~/.ssh/personal_ed25519
+
+# Work GitHub account
+Host github.com
+ HostName github.com
+ User git
+ AddKeysToAgent yes
+ UseKeychain yes
+ IdentityFile ~/.ssh/work_rsa
+
+# e.g of how to use 'ssh <host>' (as long are they registered in the ssh-agent)
+# ssh github.com-personal
+# ssh github.com

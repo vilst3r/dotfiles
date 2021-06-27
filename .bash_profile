@@ -40,3 +40,7 @@ if test $(which powerline-daemon); then
 else
     echo "Missing powerline config"
 fi
+
+# e.g of how to use 'ssh <host>' (as long are they registered in the ssh-agent)
+# ssh github.com-personal
+# ssh github.com
